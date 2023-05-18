@@ -1,4 +1,6 @@
 # Image File Editing and Image Processing
+version 1.2
+    -convert Gray_scale feature addition
 Version 1.1
     -Gamma correction feature addition
 
@@ -13,3 +15,5 @@ Version 1.0 (learning of tkinter for me)
 簡単な加工ツールがあります（ガウシアンぼかし、モザイク、拡大縮小、鉛筆画、RGB調整）
 
 バージョン1.1　-　ガンマ補正機能追加
+
+バージョン1.2　-  グレイスケール変換機能追加
