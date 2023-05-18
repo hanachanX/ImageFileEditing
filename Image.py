@@ -150,8 +150,11 @@ class App(tk.Tk):
         self.blurmenu.add_command(label='色彩変換' , command=self.on_change)
         self.blurmenu.add_command(label='ガンマ補正', command=self.on_gamma)
         self.blurmenu.add_command(label='グレースケール変換' , command=self.on_gray_scale)
+<<<<<<< HEAD
         self.blurmenu.add_command(label='セピア色変換' , command=self.on_sepia)
         self.blurmenu.add_command(label='ミラー処理' , command=self.on_mirror)
+=======
+>>>>>>> 4db093f70da2cd6dc679730d49cbf291fcb20be9
         self.menubar.add_cascade(label='加工' , menu=self.blurmenu)
         
         
@@ -199,6 +202,7 @@ class App(tk.Tk):
         # Sub Window for Gannma_Correction
         self.gamma = None
 
+<<<<<<< HEAD
     def on_mirror(self , event=None):
         if self.image:
             cv2_img = np.array(ImageTk.getimage(self.image))
@@ -221,6 +225,8 @@ class App(tk.Tk):
         else:
             self.label.config(text='画像を表示してください')
 
+=======
+>>>>>>> 4db093f70da2cd6dc679730d49cbf291fcb20be9
     def on_gray_scale(self , event=None):
         if self.image:
             cv2_image = np.array(ImageTk.getimage(self.image))
