@@ -14,9 +14,8 @@ import threading
 import time
 import signal
 
-logging.basicConfig(filename='tcode01.log' , level=logging.DEBUG , encoding='utf-8')
+logging.basicConfig(filename='tcode01.log' , level=logging.INFO , encoding='utf-8')
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 def dodgeV2(x,y):
     return cv2.divide(x, 255 - y, scale=256)
