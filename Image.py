@@ -17,6 +17,28 @@ import signal
 logging.basicConfig(filename='tcode01.log' , level=logging.INFO , encoding='utf-8')
 logger = logging.getLogger(__name__)
 
+def sepia(image):
+    # NumPy配列に変換
+    img_np = np.array(image)
+
+    # セピアカラーに変換するための行列計算
+    sepia_matrix = np.array([
+        [0.393, 0.769, 0.189],
+        [0.349, 0.686, 0.168],
+        [0.272, 0.534, 0.131]
+    ])
+
+    # 行列計算を行い、セピア変換を適用
+    sepia_image = np.dot(img_np, sepia_matrix.T)
+
+    # 値を0から255の範囲に制限する
+    sepia_image = np.clip(sepia_image, 0, 255)
+
+    # NumPy配列からcv2の画像形式に変換
+    sepia_image = sepia_image.astype(np.uint8)
+
+    return sepia_image
+
 def dodgeV2(x,y):
     return cv2.divide(x, 255 - y, scale=256)
 
@@ -128,6 +150,8 @@ class App(tk.Tk):
         self.blurmenu.add_command(label='色彩変換' , command=self.on_change)
         self.blurmenu.add_command(label='ガンマ補正', command=self.on_gamma)
         self.blurmenu.add_command(label='グレースケール変換' , command=self.on_gray_scale)
+        self.blurmenu.add_command(label='セピア色変換' , command=self.on_sepia)
+        self.blurmenu.add_command(label='ミラー処理' , command=self.on_mirror)
         self.menubar.add_cascade(label='加工' , menu=self.blurmenu)
         
         
@@ -175,6 +199,28 @@ class App(tk.Tk):
         # Sub Window for Gannma_Correction
         self.gamma = None
 
+    def on_mirror(self , event=None):
+        if self.image:
+            cv2_img = np.array(ImageTk.getimage(self.image))
+            cv2_img = cv2.flip(cv2_img , 1)
+            self.image = ImageTk.PhotoImage(Image.fromarray(cv2_img))
+            self.label.config(image=self.image)
+        else:
+            self.label.config(text='画像を表示してください')
+
+    def on_sepia(self , event=None):
+        if self.image:
+            img_pil = ImageTk.getimage(self.image)
+            if img_pil.mode == 'RGBA':
+                img_pil_rgb = img_pil.convert('RGB')
+                sepia_image = sepia(img_pil_rgb)
+            else:
+                sepia_image = sepia(img_pil)
+            self.image = ImageTk.PhotoImage(Image.fromarray(sepia_image))
+            self.label.config(image=self.image)
+        else:
+            self.label.config(text='画像を表示してください')
+
     def on_gray_scale(self , event=None):
         if self.image:
             cv2_image = np.array(ImageTk.getimage(self.image))
@@ -207,7 +253,7 @@ class App(tk.Tk):
             self.button_for_gamma.grid(row=1 , column=1 , padx=10 , pady=10)
     
     def update_gamma_scale(self , value):
-        val = self.gamma_var.get()
+        val = self.gamma_var.get()/10
         self.label_for_gamma.config(text=f'補正値:{val:.2f}')
 
     def on_exec_gamma(self , event=None):
