@@ -1,6 +1,7 @@
 # Image File Editing and Image Processing
 version 1.2
     -convert Gray_scale feature addition
+    
 Version 1.1
     -Gamma correction feature addition
 
