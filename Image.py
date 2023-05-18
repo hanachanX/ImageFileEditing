@@ -127,7 +127,7 @@ class App(tk.Tk):
         self.blurmenu.add_command(label='鉛筆画' , command=self.on_pencil)
         self.blurmenu.add_command(label='拡大・縮小' , command=self.on_resize)
         self.blurmenu.add_command(label='色彩変換' , command=self.on_change)
-        # self.blurmenu.add_command(label='Median Blur' , command=self.on_median_blur)
+        self.blurmenu.add_command(label='ガンマ補正', command=self.on_gamma)
         self.menubar.add_cascade(label='加工' , menu=self.blurmenu)
         
         
@@ -171,6 +171,47 @@ class App(tk.Tk):
         self.watcher = None
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
+
+        # Sub Window for Gannma_Correction
+        self.gamma = None
+
+    def on_gamma(self , event=None):
+        if not self.gamma:
+            self.gamma = tk.Toplevel()
+            self.gamma.title('ガンマ補正')
+            self.gamma.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()+20}')
+            self.gamma_var = tk.DoubleVar()
+            self.gamma_var.set(22)
+            self.label_for_gamma = ttk.Label(self.gamma , text='補正値')
+            self.scale_for_gamma = ttk.Scale(self.gamma , 
+                                             from_=1 , 
+                                             to=50 , 
+                                             length=200 , 
+                                             variable=self.gamma_var , 
+                                             orient=tk.HORIZONTAL , 
+                                             command=self.update_gamma_scale
+                                         )
+            self.update_gamma_scale('_')
+            self.button_for_gamma = ttk.Button(self.gamma , text='＞' , command=self.on_exec_gamma)
+            self.scale_for_gamma.grid(row=0 , column=0 , pady=10)
+            self.label_for_gamma.grid(row=0 , column=1, padx=10 , pady=10)
+            self.button_for_gamma.grid(row=1 , column=1 , padx=10 , pady=10)
+    
+    def update_gamma_scale(self , value):
+        val = self.gamma_var.get()
+        self.label_for_gamma.config(text=f'補正値:{val:.2f}')
+
+    def on_exec_gamma(self , event=None):
+        gamma = self.gamma_var.get()/10.0
+        logger.debug('ガンマ補正実行 event:%s gamma_var:%s' , event , gamma)
+        inv_gamma = 1.0 / gamma
+        image_cv2 = np.array(ImageTk.getimage(self.image))
+        corrected_image = np.power(image_cv2 / 255.0 , inv_gamma) *255.0
+        corrected_image = np.clip(corrected_image , 0 , 255).astype(np.uint8)
+        self.image = ImageTk.PhotoImage(Image.fromarray(corrected_image))
+        self.label.config(image=self.image)
+        self.gamma.destroy()
+        self.gamma = False
 
     def close_Handler(self , event=None):
         messagebox.showinfo('確認', '閉じるボタンは無効です')
