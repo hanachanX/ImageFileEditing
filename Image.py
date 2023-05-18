@@ -127,6 +127,7 @@ class App(tk.Tk):
         self.blurmenu.add_command(label='拡大・縮小' , command=self.on_resize)
         self.blurmenu.add_command(label='色彩変換' , command=self.on_change)
         self.blurmenu.add_command(label='ガンマ補正', command=self.on_gamma)
+        self.blurmenu.add_command(label='グレースケール変換' , command=self.on_gray_scale)
         self.menubar.add_cascade(label='加工' , menu=self.blurmenu)
         
         
@@ -173,6 +174,15 @@ class App(tk.Tk):
 
         # Sub Window for Gannma_Correction
         self.gamma = None
+
+    def on_gray_scale(self , event=None):
+        if self.image:
+            cv2_image = np.array(ImageTk.getimage(self.image))
+            cv2_image = cv2.cvtColor(cv2_image , cv2.COLOR_RGB2GRAY)
+            self.image = ImageTk.PhotoImage(Image.fromarray(cv2_image))
+            self.label.config(image=self.image)
+        else:
+            self.label.config('画像が表示されていません')
 
     def on_gamma(self , event=None):
         if not self.gamma:
