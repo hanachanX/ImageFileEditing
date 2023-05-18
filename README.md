@@ -1,8 +1,6 @@
 # Image File Editing and Image Processing
 version 1.3
     -Adding sepia tone conversion functionality.
-    
-    
 -Adding flip feature.
 
 version 1.2
