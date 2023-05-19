@@ -14,6 +14,8 @@ import threading
 import time
 import signal
 
+
+
 logging.basicConfig(filename='tcode01.log' , level=logging.INFO , encoding='utf-8')
 logger = logging.getLogger(__name__)
 
@@ -142,18 +144,19 @@ class App(tk.Tk):
         self.filemenu.add_command(label="終了" , command=self.quit)
         self.menubar.add_cascade(label='ファイル' , menu=self.filemenu)
 
-        self.blurmenu = tk.Menu(self.menubar , tearoff=0)
-        self.blurmenu.add_command(label='Gaussian Blur', command=self.on_gaussian_blur)
-        self.blurmenu.add_command(label='モザイク' , command=self.on_mosaic)
-        self.blurmenu.add_command(label='鉛筆画' , command=self.on_pencil)
-        self.blurmenu.add_command(label='拡大・縮小' , command=self.on_resize)
-        self.blurmenu.add_command(label='色彩変換' , command=self.on_change)
-        self.blurmenu.add_command(label='ガンマ補正', command=self.on_gamma)
-        self.blurmenu.add_command(label='グレースケール変換' , command=self.on_gray_scale)
-        self.blurmenu.add_command(label='セピア色変換' , command=self.on_sepia)
-        self.blurmenu.add_command(label='ミラー処理' , command=self.on_mirror)
+        self.processmenu = tk.Menu(self.menubar , tearoff=0)
+        self.processmenu.add_command(label='Gaussian Blur', command=self.on_gaussian_blur)
+        self.processmenu.add_command(label='モザイク' , command=self.on_mosaic)
+        self.processmenu.add_command(label='鉛筆画' , command=self.on_pencil)
+        self.processmenu.add_command(label='拡大・縮小' , command=self.on_resize)
+        self.processmenu.add_command(label='色彩変換' , command=self.on_change)
+        self.processmenu.add_command(label='ガンマ補正', command=self.on_gamma)
+        self.processmenu.add_command(label='グレースケール変換' , command=self.on_gray_scale)
+        self.processmenu.add_command(label='セピア色変換' , command=self.on_sepia)
+        self.processmenu.add_command(label='ミラー処理' , command=self.on_mirror)
+        self.processmenu.add_command(label='トリミング' , command=self.on_trim)
 
-        self.menubar.add_cascade(label='加工' , menu=self.blurmenu)
+        self.menubar.add_cascade(label='加工' , menu=self.processmenu)
         
         
         # Create Edit Menu
@@ -165,8 +168,12 @@ class App(tk.Tk):
 
         self.config(menu=self.menubar)
 
-        self.label = ttk.Label(self)
-        self.label.pack()
+        # トリミングのためのCanvasの作成
+        self.canvas = tk.Canvas(self)
+        self.canvas.pack(fill=tk.BOTH , expand=True)
+
+        # self.label = ttk.Label(self)
+        # self.label.pack()
 
         self.image_path = ''
         self.directory=None # For Win2
@@ -182,10 +189,15 @@ class App(tk.Tk):
         self.kernel_value = 5
         self.sigma_value = 13
 
-        # Pop-up Window
+        # 右クリックポップアップウィンドウ
         self.bind('<Button-3>' , self.show_menu)
+        
+        self.start_x = None
+        self.start_y = None
+        self.end_x = None
+        self.end_y = None
 
-        # For Win2
+        # リストボックスウインドウ用のコールバック関数の設定
         self.filelist.bind('<Button-1>' , self.on_draw)
         self.win2.bind('<Button-3>' , self.on_rename)
         self.win2.bind('<Down>' , self.on_down)
@@ -197,18 +209,53 @@ class App(tk.Tk):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
 
-        # Sub Window for Gannma_Correction
+        # ガンマ補正用のサブウインドウ
         self.gamma = None
 
+    def on_trim(self , event=None):
+        self.canvas.bind('<Button-1>' , self.on_trim_start)
+        self.canvas.bind('<B1-Motion>' , self.on_drag)
+        self.canvas.bind('<ButtonRelease-1>' , self.on_mouse_release)
+
+    def on_trim_start(self , event=None):
+        logger.info("始点(%s , %s)" , event.x , event.y)
+        self.start_x = event.x
+        self.start_y = event.y
+        
+    def on_drag(self , event=None):
+        self.canvas.delete('rect')
+        self.canvas.create_rectangle(self.start_x , self.start_y , event.x , event.y , outline='white' , tags='rect')
+        
+    def on_mouse_release(self , event=None):
+        logger.info('終点(%s , %s)' , event.x , event.y)
+        self.canvas.delete('rect')
+        self.canvas.create_rectangle(self.start_x , self.start_y , event.x , event.y , outline='blue' , tags='rect')
+        self.end_x = event.x
+        self.end_y = event.y
+        result = messagebox.askyesno('確認' , '矩形範囲をトリミングします。よろしいですか？')
+        if result:
+            self.canvas.delete('rect')
+            PIL_img = ImageTk.getimage(self.image)
+            cropped_image = PIL_img.crop((self.start_x , self.start_y , self.end_x , self.end_y))
+            self.image = ImageTk.PhotoImage(cropped_image)
+            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+            width = self.end_x - self.start_x
+            height = self.end_y - self.start_y
+            self.wm_geometry(f'{width}x{height}')
+        else:
+            self.canvas.delete('rect')
+        self.canvas.unbind('<Button-1>')
+        self.canvas.unbind('<B1-Motion>')
+        self.canvas.unbind('<ButtonRelease-1>')
 
     def on_mirror(self , event=None):
         if self.image:
             cv2_img = np.array(ImageTk.getimage(self.image))
             cv2_img = cv2.flip(cv2_img , 1)
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_img))
-            self.label.config(image=self.image)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         else:
-            self.label.config(text='画像を表示してください')
+            messagebox.showinfo('確認' , '画像を表示してください')
 
     def on_sepia(self , event=None):
         if self.image:
@@ -219,18 +266,18 @@ class App(tk.Tk):
             else:
                 sepia_image = sepia(img_pil)
             self.image = ImageTk.PhotoImage(Image.fromarray(sepia_image))
-            self.label.config(image=self.image)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         else:
-            self.label.config(text='画像を表示してください')
+            messagebox.showinfo('確認' , '画像を表示してください')
 
     def on_gray_scale(self , event=None):
         if self.image:
             cv2_image = np.array(ImageTk.getimage(self.image))
             cv2_image = cv2.cvtColor(cv2_image , cv2.COLOR_RGB2GRAY)
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_image))
-            self.label.config(image=self.image)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         else:
-            self.label.config('画像が表示されていません')
+            messagebox.showinfo('確認' , '画像を表示してください')
 
     def on_gamma(self , event=None):
         if not self.gamma:
@@ -266,7 +313,7 @@ class App(tk.Tk):
         corrected_image = np.power(image_cv2 / 255.0 , inv_gamma) *255.0
         corrected_image = np.clip(corrected_image , 0 , 255).astype(np.uint8)
         self.image = ImageTk.PhotoImage(Image.fromarray(corrected_image))
-        self.label.config(image=self.image)
+        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         self.gamma.destroy()
         self.gamma = False
 
@@ -362,10 +409,10 @@ class App(tk.Tk):
             self.image = self.original = ImageTk.PhotoImage(Image.open(full_path))
             if self.image:
                 self.width , self.height = self.image.width() , self.image.height()
-                self.label.config(image=self.image)
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(f'{self.width}x{self.height}')
             else:
-                self.label.config(text='画像ファイルが読み込めませんでした')
+                messagebox.showinfo('確認' , '画像を表示してください')
         
 
     def on_open_file(self , event=None):
@@ -377,8 +424,8 @@ class App(tk.Tk):
             self.image = Image.open(self.image_path)
             self.width , self.height = self.image.size
             self.image = self.original = ImageTk.PhotoImage(self.image)
-            self.label.config(image=self.image)
-            self.wm_geometry(str(self.width) + 'x' + str(self.height))
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.wm_geometry(f'{self.width}x{self.height}')
 
     def on_save_file(self , event=None):
         self.image_path = filedialog.asksaveasfilename(defaultextension='.jpg')
@@ -387,7 +434,7 @@ class App(tk.Tk):
                 name = tk_to_pil(self.image)
                 name.save(self.image_path)
             else:
-                self.label.config(text='画像が表示されていません')
+                messagebox.showinfo('確認' , '画像を表示してください')
 
     def on_gaussian_blur(self , event=None):
         if self.image:
@@ -396,7 +443,7 @@ class App(tk.Tk):
             self.image_arr = cv2.cvtColor(self.image_arr , cv2.COLOR_RGB2BGR)
             self.popup_gaussian()
         else:
-            self.label.config(text='画像を表示させてください')
+            messagebox.showinfo('確認' , '画像を表示してください')
             
     def on_mosaic(self , enent=None):
         global top_window
@@ -428,9 +475,9 @@ class App(tk.Tk):
             arr_img = cv2.cvtColor(arr_img , cv2.COLOR_BGR2RGB)
             img = Image.fromarray(arr_img)
             self.image = ImageTk.PhotoImage(img)
-            self.label.config(image=self.image)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         else:
-            self.label.config(text='画像を表示してください')
+            messagebox.showinfo('確認' , '画像を表示してください')
 
     
     def undo(self , event=None):
@@ -442,7 +489,7 @@ class App(tk.Tk):
         image = cv2.resize(image , dsize=(w , h) , interpolation=cv2.INTER_LANCZOS4)
         image = cv2_to_pil(image)
         self.image = ImageTk.PhotoImage(image) 
-        self.label.config(image=self.image)
+        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         self.wm_geometry(str(w)+'x'+str(h))
     
     def update_mosaic_slidar(self , event):
@@ -464,7 +511,7 @@ class App(tk.Tk):
                 image[y:y+block_size , x:x+block_size] = mean
         image = cv2_to_pil(image)
         self.image = ImageTk.PhotoImage(image)
-        self.label.config(image=self.image)
+        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         top_window.destroy()
 
     def popup_gaussian(self):
@@ -523,9 +570,9 @@ class App(tk.Tk):
             gaus = cv2.GaussianBlur(self.image_arr , ksize=kernel , sigmaX=sigmaX)
             self.image = cv2_to_pil(gaus)
             self.image = ImageTk.PhotoImage(self.image)
-            self.label.config(image=self.image)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         else:
-            self.label.config(text="画像が取得できません")
+            messagebox.showinfo('確認' , '画像を表示してください')
 
     def show_menu(self , event=None):
         self.editmenu.post(event.x_root , event.y_root)
@@ -538,7 +585,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(self.image)
             if self.image:
                 self.original = self.image
-                self.label.config(image=self.image)
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(str(self.width)+'x'+str(self.height))
         elif isinstance(self.image , bytes):
             data = self.image[2:]
@@ -549,7 +596,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(rgb_image)
             if self.image:
                 self.original = self.image
-                self.label.config(image=self.image)
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
         elif isinstance(self.image , list):
             img = Image.open(self.image[0])
@@ -557,10 +604,10 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(img)
             if self.image:
                 self.original = self.image
-                self.label.config(image=self.image)
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
         else:
-            self.label.config(text='画像をコピーしてきてください')
+            messagebox.showinfo('確認' , '画像を表示してください')
 
     def copy_to_clipboard(self , event=None):
         if self.image:
@@ -573,7 +620,7 @@ class App(tk.Tk):
             output.close()
             send_to_clipboard(win32clipboard.CF_DIB, data)
         else:
-            self.label.config(text='画像を表示させてください')
+            messagebox.showinfo('確認' , '画像を表示してください')
 
     def on_resize(self , event=None):
         global top_window
@@ -600,11 +647,11 @@ class App(tk.Tk):
             arr_img = cv2.resize(arr_img , dsize=None , fx=rate , fy=rate ,interpolation=cv2.INTER_LANCZOS4)
             height , width , _ = arr_img.shape
             self.image = ImageTk.PhotoImage(Image.fromarray(arr_img))
-            self.label.config(image=self.image)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
             self.wm_geometry(str(width) +'x' + str(height))
             top_window.destroy()
         else:
-            self.label.config(text='画像を表示してください')
+            messagebox.showinfo('確認' , '画像を表示してください')
             top_window.destroy()
     
     def on_change(self,event=None):
@@ -684,10 +731,10 @@ class App(tk.Tk):
             arr_uint8 = (img*255).astype(np.uint8)
             arr_uint8 = cv2.cvtColor(arr_uint8 , cv2.COLOR_BGR2RGB)
             self.image = ImageTk.PhotoImage(Image.fromarray(arr_uint8))
-            self.label.config(image=self.image)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
             self.popup.destroy()
         else:
-            self.label.config(text='画像を表示させてください')
+            messagebox.showinfo('確認' , '画像を表示してください')
             
     def quit(self):
         self.destroy()
