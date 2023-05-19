@@ -1,3 +1,4 @@
 pywin32==306
 Pillow==9.5.0
 opencv-python==4.7.0.72
+numpy==1.22.3
