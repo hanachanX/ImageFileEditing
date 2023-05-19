@@ -1,9 +1,12 @@
 # Image File Editing and Image Processing
-version 1.3
+Version 1.4
+    -Add cropping feature
+
+Version 1.3
     -Adding sepia tone conversion functionality.
 -Adding flip feature.
 
-version 1.2
+Version 1.2
     -convert Gray_scale feature addition
     
 Version 1.1
@@ -24,5 +27,7 @@ Version 1.0 (learning of tkinter for me)
 バージョン1.2　- グレースケール変換機能追加
 
 バージョン1.3　- セピア調変換、ミラー変換機能追加
+
+バージョン1.4　- トリミング機能の追加（トリミングの選択で画像左クリック＆ドラッグが有効化）
 
 追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
