@@ -15,6 +15,7 @@ import time
 import signal
 import re
 
+<<<<<<< HEAD
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , filename='tcode01.log' , level=logging.WARNING , encoding='utf-8')
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,13 @@ def check_text_chunk(filepath):
         messagebox.showerror("エラー", "ファイルの読み込みエラーです。")
         return False
 
+=======
+
+
+logging.basicConfig(filename='tcode01.log' , level=logging.INFO , encoding='utf-8')
+logger = logging.getLogger(__name__)
+
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
 def sepia(image):
     # NumPy配列に変換
     img_np = np.array(image)
@@ -224,6 +232,10 @@ class App(tk.Tk):
         self.processmenu.add_command(label='セピア色変換' , command=self.on_sepia)
         self.processmenu.add_command(label='ミラー処理' , command=self.on_mirror)
         self.processmenu.add_command(label='トリミング' , command=self.on_trim)
+<<<<<<< HEAD
+=======
+
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
         self.menubar.add_cascade(label='加工' , menu=self.processmenu)
         
         
@@ -244,6 +256,12 @@ class App(tk.Tk):
         # トリミングのためのCanvasの作成
         self.canvas = tk.Canvas(self)
         self.canvas.pack(fill=tk.BOTH , expand=True)
+<<<<<<< HEAD
+=======
+
+        # self.label = ttk.Label(self)
+        # self.label.pack()
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
 
         self.image_path = ''
         self.directory=None # For Win2
@@ -259,10 +277,15 @@ class App(tk.Tk):
         self.kernel_value = 5
         self.sigma_value = 13
 
-        # Pop-up Window
+        # 右クリックポップアップウィンドウ
         self.bind('<Button-3>' , self.show_menu)
+        
+        self.start_x = None
+        self.start_y = None
+        self.end_x = None
+        self.end_y = None
 
-        # For Win2
+        # リストボックスウインドウ用のコールバック関数の設定
         self.filelist.bind('<Button-1>' , self.on_draw)
         self.win2.bind('<Button-3>' , self.on_rename)
         self.win2.bind('<Down>' , self.on_down)
@@ -274,6 +297,7 @@ class App(tk.Tk):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
 
+<<<<<<< HEAD
         # ガンマ補正のサブウインドウ
         self.gamma = None
 
@@ -364,6 +388,11 @@ class App(tk.Tk):
         self.clipboard_clear()
         self.clipboard_append(text)
 
+=======
+        # ガンマ補正用のサブウインドウ
+        self.gamma = None
+
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
     def on_trim(self , event=None):
         self.canvas.bind('<Button-1>' , self.on_trim_start)
         self.canvas.bind('<B1-Motion>' , self.on_drag)
@@ -427,9 +456,13 @@ class App(tk.Tk):
             cv2_image = np.array(ImageTk.getimage(self.image))
             cv2_image = cv2.cvtColor(cv2_image , cv2.COLOR_RGB2GRAY)
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_image))
+<<<<<<< HEAD
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+=======
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
         else:
-            self.label.config('画像が表示されていません')
+            messagebox.showinfo('確認' , '画像を表示してください')
 
     def on_gamma(self , event=None):
         if not self.gamma:
@@ -454,7 +487,7 @@ class App(tk.Tk):
             self.button_for_gamma.grid(row=1 , column=1 , padx=10 , pady=10)
     
     def update_gamma_scale(self , value):
-        val = self.gamma_var.get()
+        val = self.gamma_var.get()/10
         self.label_for_gamma.config(text=f'補正値:{val:.2f}')
 
     def on_exec_gamma(self , event=None):
@@ -465,7 +498,11 @@ class App(tk.Tk):
         corrected_image = np.power(image_cv2 / 255.0 , inv_gamma) *255.0
         corrected_image = np.clip(corrected_image , 0 , 255).astype(np.uint8)
         self.image = ImageTk.PhotoImage(Image.fromarray(corrected_image))
+<<<<<<< HEAD
         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+=======
+        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
         self.gamma.destroy()
         self.gamma = False
 
@@ -561,7 +598,11 @@ class App(tk.Tk):
             self.image = self.original = ImageTk.PhotoImage(Image.open(full_path))
             if self.image:
                 self.width , self.height = self.image.width() , self.image.height()
+<<<<<<< HEAD
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+=======
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
                 self.wm_geometry(f'{self.width}x{self.height}')
                 logger.debug('%s , %s' ,full_path ,  os.path.splitext(full_path)[1].lower())
                 if os.path.splitext(full_path)[1].lower() == '.png':
@@ -588,7 +629,11 @@ class App(tk.Tk):
                     self.ptextb2.config(state='disabled')
                     self.ptextb3.config(state='disabled')
             else:
+<<<<<<< HEAD
                 messagebox.showerror('エラー','画像を表示してください')
+=======
+                messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
         
 
     def on_open_file(self , event=None):
@@ -599,6 +644,7 @@ class App(tk.Tk):
             self.image = Image.open(self.image_path)
             self.width , self.height = self.image.size
             self.image = self.original = ImageTk.PhotoImage(self.image)
+<<<<<<< HEAD
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
             self.wm_geometry(str(self.width) + 'x' + str(self.height))
             if os.path.splitext(self.image_path)[1].lower() == '.png':
@@ -624,6 +670,10 @@ class App(tk.Tk):
                 self.ptextb1.config(state='disabled')
                 self.ptextb2.config(state='disabled')
                 self.ptextb3.config(state='disabled')
+=======
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.wm_geometry(f'{self.width}x{self.height}')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
 
     def on_save_file(self , event=None):
         self.image_path = filedialog.asksaveasfilename(defaultextension='.jpg')
@@ -632,7 +682,11 @@ class App(tk.Tk):
                 name = tk_to_pil(self.image)
                 name.save(self.image_path)
             else:
+<<<<<<< HEAD
                 messagebox.showerror('エラー','画像を表示してください')
+=======
+                messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
 
     def on_gaussian_blur(self , event=None):
         if self.image:
@@ -641,7 +695,11 @@ class App(tk.Tk):
             self.image_arr = cv2.cvtColor(self.image_arr , cv2.COLOR_RGB2BGR)
             self.popup_gaussian()
         else:
+<<<<<<< HEAD
             messagebox.showerror('エラー','画像を表示してください')
+=======
+            messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
             
     def on_mosaic(self , enent=None):
         global top_window
@@ -673,9 +731,15 @@ class App(tk.Tk):
             arr_img = cv2.cvtColor(arr_img , cv2.COLOR_BGR2RGB)
             img = Image.fromarray(arr_img)
             self.image = ImageTk.PhotoImage(img)
+<<<<<<< HEAD
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
         else:
             messagebox.showerror('エラー','画像を表示してください')
+=======
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+        else:
+            messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
 
     
     def undo(self , event=None):
@@ -687,7 +751,11 @@ class App(tk.Tk):
         image = cv2.resize(image , dsize=(w , h) , interpolation=cv2.INTER_LANCZOS4)
         image = cv2_to_pil(image)
         self.image = ImageTk.PhotoImage(image) 
+<<<<<<< HEAD
         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+=======
+        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
         self.wm_geometry(str(w)+'x'+str(h))
     
     def update_mosaic_slidar(self , event):
@@ -709,7 +777,11 @@ class App(tk.Tk):
                 image[y:y+block_size , x:x+block_size] = mean
         image = cv2_to_pil(image)
         self.image = ImageTk.PhotoImage(image)
+<<<<<<< HEAD
         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+=======
+        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
         top_window.destroy()
 
     def popup_gaussian(self):
@@ -769,10 +841,16 @@ class App(tk.Tk):
             gaus = cv2.GaussianBlur(self.image_arr , ksize=kernel , sigmaX=sigmaX)
             self.image = cv2_to_pil(gaus)
             self.image = ImageTk.PhotoImage(self.image)
+<<<<<<< HEAD
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
             top_window.destroy()
         else:
             messagebox.showerror('エラー','画像を表示してください')
+=======
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+        else:
+            messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
 
     def show_menu(self , event=None):
         self.editmenu.post(event.x_root , event.y_root)
@@ -794,7 +872,11 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(self.image)
             if self.image:
                 self.original = self.image
+<<<<<<< HEAD
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+=======
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
                 self.wm_geometry(str(self.width)+'x'+str(self.height))
         elif isinstance(self.image , bytes):
             data = self.image[2:]
@@ -805,7 +887,11 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(rgb_image)
             if self.image:
                 self.original = self.image
+<<<<<<< HEAD
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+=======
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
         elif isinstance(self.image , list):
             img = Image.open(self.image[0])
@@ -813,10 +899,17 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(img)
             if self.image:
                 self.original = self.image
+<<<<<<< HEAD
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
         else:
             messagebox.showerror('エラー','画像を表示してください')
+=======
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+                self.wm_geometry(str(self.width) + 'x' + str(self.height))
+        else:
+            messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
 
     def copy_to_clipboard(self , event=None):
         if self.image:
@@ -829,7 +922,11 @@ class App(tk.Tk):
             output.close()
             send_to_clipboard(win32clipboard.CF_DIB, data)
         else:
+<<<<<<< HEAD
             messagebox.showerror('エラー','画像を表示してください')
+=======
+            messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
 
     def on_resize(self , event=None):
         global top_window
@@ -856,11 +953,19 @@ class App(tk.Tk):
             arr_img = cv2.resize(arr_img , dsize=None , fx=rate , fy=rate ,interpolation=cv2.INTER_LANCZOS4)
             height , width , _ = arr_img.shape
             self.image = ImageTk.PhotoImage(Image.fromarray(arr_img))
+<<<<<<< HEAD
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
             self.wm_geometry(str(width) +'x' + str(height))
             top_window.destroy()
         else:
             messagebox.showerror('エラー','画像を表示してください')
+=======
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.wm_geometry(str(width) +'x' + str(height))
+            top_window.destroy()
+        else:
+            messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
             top_window.destroy()
     
     def on_change(self,event=None):
@@ -940,10 +1045,17 @@ class App(tk.Tk):
             arr_uint8 = (img*255).astype(np.uint8)
             arr_uint8 = cv2.cvtColor(arr_uint8 , cv2.COLOR_BGR2RGB)
             self.image = ImageTk.PhotoImage(Image.fromarray(arr_uint8))
+<<<<<<< HEAD
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
             self.popup.destroy()
         else:
             messagebox.showerror('エラー','画像を表示してください')
+=======
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.popup.destroy()
+        else:
+            messagebox.showinfo('確認' , '画像を表示してください')
+>>>>>>> c0b8af54399db849d14b75fb52f4c782ed45c4c3
             
     def quit(self):
         self.destroy()
