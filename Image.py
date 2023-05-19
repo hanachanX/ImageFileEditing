@@ -333,7 +333,7 @@ class App(tk.Tk):
         self.ptextb3.config(state='disabled')
 
     def on_config_panel(self , event=None):
-        if not self.config_panel:
+        if not self.config_panel or not self.config_panel.winfo_exists():
             self.config_panel = tk.Toplevel()
             self.config_panel.title('設定')
             self.config_panel.geometry(f'+{self.winfo_x()}+{self.winfo_y()}')
@@ -349,6 +349,8 @@ class App(tk.Tk):
                                           ) 
             self.check1.pack()
             self.check2.pack()
+        else:
+            self.config_panel.deiconify()
 
     def on_change1(self , event=None):
         checked = self.chk_var1.get()
