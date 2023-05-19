@@ -24,3 +24,5 @@ Version 1.0 (learning of tkinter for me)
 バージョン1.2　- グレースケール変換機能追加
 
 バージョン1.3　- セピア調変換、ミラー変換機能追加
+
+追加ライブラリのインストール：python -m pip install -r requirements.txt
