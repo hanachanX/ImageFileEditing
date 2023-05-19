@@ -1,4 +1,8 @@
+The author is a beginner in programming!!!
 # Image File Editing and Image Processing
+Version 1.5
+    -Added support for stable diffusion. Display prompt and image generation information for PNG files. Added clipboard copying functionality.
+
 Version 1.4
     -Add cropping feature
 
@@ -29,5 +33,8 @@ Version 1.0 (learning of tkinter for me)
 バージョン1.3　- セピア調変換、ミラー変換機能追加
 
 バージョン1.4　- トリミング機能の追加（トリミングの選択で画像左クリック＆ドラッグが有効化）
+
+バージョン1.5　- Stable Diffusionに対応。PNGファイルからプロンプト、生成情報を抽出、表示、クリップボードへ送る機能を追加。
+メインウインドウ以外を非表示にする機能を追加。
 
 追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
