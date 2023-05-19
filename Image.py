@@ -167,7 +167,7 @@ class App(tk.Tk):
         # プロンプトウインドウの作成
         self.pwin = tk.Toplevel()
         self.pwin.title('Stable Diffusion情報')
-        self.pwin.geometry('400x350')
+        self.pwin.geometry('600x350')
         self.pwin.protocol('WM_DELETE_WINDOW' , self.close_Handler)
         self.pwin.geometry(f'+{self.winfo_x()+1400}+{self.winfo_y()+720}')
 
