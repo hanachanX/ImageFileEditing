@@ -54,3 +54,7 @@ StableDiffusion(AUTOMATIC1111)で生成された大量の画像ファイル（JP
 次回の起動時にいちいちフォルダを指定する必要がありません。その他バグを修正しました。
 
 * 追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
+
+# アプリの画像　いたってシンプルです。
+
+![起動画面](image/view.png)
