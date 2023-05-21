@@ -14,6 +14,7 @@ import threading
 import time
 import signal
 import re
+import subprocess
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , filename='tcode01.log' , level=logging.WARNING , encoding='utf-8')
 logger = logging.getLogger(__name__)
@@ -146,7 +147,7 @@ class App(tk.Tk):
         self.win2.title('ファイル')
         self.win2.geometry('300x800')
         self.win2.protocol('WM_DELETE_WINDOW' , self.close_Handler)
-        self.win2.geometry(f'+{self.winfo_x()+1100}+{self.winfo_y()+250}')
+        self.win2.geometry(f'+{self.winfo_x()+1100}+{self.winfo_y()+300}')
 
         # リストボックスの作成
         self.filelist = tk.Listbox(self.win2)
@@ -159,17 +160,40 @@ class App(tk.Tk):
 
         # ファイルリストボックスウインドウにメニュー追加
         self.filemenubar = tk.Menu(self.win2)
-        self.filemenu = tk.Menu(self.filemenubar , tearoff=False)
-        self.filemenu.add_command(label='開く' , command=self.on_open_dir)
-        self.filemenubar.add_cascade(label='画像フォルダ読み込み' , menu=self.filemenu)
+        self.filemenu2 = tk.Menu(self.filemenubar , tearoff=False)
+        self.filemenu2.add_command(label='フォルダ読み込み' , command=self.on_open_dir)
+        self.filemenu2.add_command(label='エクスプローラーで開く' , command=lambda : self.on_open_explorer('src'))
+        self.filemenu2.add_command(label='リネーム' , command=lambda : self.on_rename('src'))
+        self.filemenubar.add_cascade(label='コマンド' , menu=self.filemenu2)
+        self.sendmenu = tk.Menu(self.filemenubar , tearoff=False)
         self.win2.config(menu=self.filemenubar)
+
+        # 送り先フォルダのリストボックス
+        self.sendwin = tk.Toplevel()
+        self.sendwin.title('送り先フォルダ')
+        self.sendwin.geometry('300x410')
+        self.sendwin.protocol('WM_DELETE_WINDOW' , self.close_Handler)
+        self.sendwin.geometry(f'+{self.winfo_x()+1400}+{self.winfo_y()+300}')
+        self.sendmenubar = tk.Menu(self.sendwin)
+        self.sendmenu = tk.Menu(self.sendmenu , tearoff=False)
+        self.sendmenu.add_command(label='フォルダ読み込み' , command=self.on_open_send_dir)
+        self.sendmenu.add_command(label='エクスプローラーで開く' , command=lambda : self.on_open_explorer('dst'))
+        self.sendmenu.add_command(label='リネーム' , command=lambda : self.on_rename('dst'))
+
+        self.sendmenubar.add_cascade(label='コマンド' , menu=self.sendmenu)
+        self.sendwin.config(menu=self.sendmenubar)
+        self.sendlist = tk.Listbox(self.sendwin) 
+        self.sendlist.pack(side=tk.LEFT , fill=tk.BOTH , expand=True)
+        self.sendscroll = ttk.Scrollbar(self.sendwin , orient=tk.VERTICAL , command=self.sendlist.yview)
+        self.sendscroll.pack(side=tk.RIGHT , fill=tk.Y)
+        self.sendlist.config(yscrollcommand=self.sendscroll.set)
 
         # プロンプトウインドウの作成
         self.pwin = tk.Toplevel()
         self.pwin.title('Stable Diffusion情報')
         self.pwin.geometry('600x350')
         self.pwin.protocol('WM_DELETE_WINDOW' , self.close_Handler)
-        self.pwin.geometry(f'+{self.winfo_x()+1400}+{self.winfo_y()+720}')
+        self.pwin.geometry(f'+{self.winfo_x()+1400}+{self.winfo_y()+760}')
 
         style = ttk.Style()
         style.configure('Bold.TLabel' , font=('Hiragino Kaku Gothic' , 14 , 'bold'))
@@ -231,8 +255,7 @@ class App(tk.Tk):
         self.processmenu.add_command(label='トリミング' , command=self.on_trim)
         self.menubar.add_cascade(label='加工' , menu=self.processmenu)
         
-        
-        # Create Edit Menu
+        # 編集メニュー
         self.editmenu = tk.Menu(self.menubar , tearoff=0)
         self.editmenu.add_command(label='貼り付け' , command=self.on_paste)
         self.editmenu.add_command(label='コピー', command=self.copy_to_clipboard)
@@ -251,9 +274,10 @@ class App(tk.Tk):
         self.canvas.pack(fill=tk.BOTH , expand=True)
 
         self.image_path = ''
-        self.directory=None # For Win2
-
-        # PIL image object
+        self.directory=None # リストボックス用
+        self.senddir=None # 送り先ディレクトリ
+ 
+        # ImageTk オブジェクト 
         self.image = None # PhotoImage
         self.original = None
         self.popup = None
@@ -265,6 +289,7 @@ class App(tk.Tk):
         self.sigma_value = 13
 
         # 右クリックポップアップウィンドウ
+        self.bind('<Button-1>' , self.on_resize_opt)
         self.bind('<Button-3>' , self.show_menu)
         
         self.start_x = None
@@ -274,12 +299,19 @@ class App(tk.Tk):
 
         # リストボックスウインドウ用のコールバック関数の設定
         self.filelist.bind('<Button-1>' , self.on_draw)
-        self.win2.bind('<Button-3>' , self.on_rename)
+        self.win2.bind('<Button-3>' , self.popup_menu)
         self.win2.bind('<Down>' , self.on_down)
         self.win2.bind('<Up>' , self.on_up)
+        self.win2.bind('<Right>' , self.on_send)
         self.win2.bind('<Delete>' , self.on_delete)
 
-        # Create Signal Object For Sub-Thread
+        # 転送先リストボックスウインドウ用のコールバック関数の設定
+        self.sendlist.bind('<Button-1>' , self.on_draw)
+        self.sendlist.bind('<Button-3>' , self.popup_menu)
+        self.sendlist.bind('<Up>' , self.on_up)
+        self.sendlist.bind('<Down>' , self.on_down)
+
+        # サブスレッドのためのシグナルオブジェクト
         self.watcher = None
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
@@ -291,8 +323,42 @@ class App(tk.Tk):
         self.config_panel = None
         self.chk_var1 = tk.BooleanVar()
         self.chk_var2 = tk.BooleanVar()
+        self.chk_var3 = tk.BooleanVar()
         self.chk_var1.set(True)
         self.chk_var2.set(True)
+        self.chk_var3.set(True)
+
+        # 送り元、送り先ディレクトリ情報
+        self.source_dir = ''
+        self.dest_dir = ''
+
+        # ディレクトリ情報ファイル問い合わせ
+
+        dirfile_dir = r'./dir_config.ini'
+        if os.path.isfile(dirfile_dir):
+            with open(dirfile_dir , 'r' , encoding='utf-8') as f:
+                lines = f.read().splitlines()
+                if len(lines) == 2:
+                    self.source_dir = self.directory = lines[0]
+                    self.dest_dir = self.senddir = lines[1]
+                    self.dir_watcher(event=None)
+        else:
+            with open(dirfile_dir , 'w') as f:
+                pass
+
+        if self.source_dir:
+            file_list = os.listdir(self.source_dir) 
+            for filename in file_list:
+                if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
+                    continue
+                self.filelist.insert(tk.END , filename)
+
+        if self.dest_dir:
+            file_list = os.listdir(self.dest_dir)
+            for filename in file_list:
+                if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
+                    continue
+                self.sendlist.insert(tk.END , filename)
 
     def set_AI_info(self , image_path):
         with open(image_path , 'rb') as f:
@@ -332,6 +398,56 @@ class App(tk.Tk):
         self.ptextb3.insert(tk.END , self.target_text3)
         self.ptextb3.config(state='disabled')
 
+    def popup_menu(self , event):
+        widget = event.widget
+        if str(widget) == '.!toplevel.!listbox':
+            self.filemenu2.post(event.x_root , event.y_root)
+        else:
+            self.sendmenu.post(event.x_root , event.y_root)
+
+    def on_open_explorer(self , from_):
+        switch = True
+        if from_ == 'dst':
+            switch = False
+        if switch:
+            if self.directory:
+                logger.debug('on_open_explorer: %s' , self.directory)
+                if len(self.filelist.curselection()) == 0:
+                    subprocess.run(['start' , self.directory] , shell=True)
+                else:
+                    index = self.filelist.curselection()[0]
+                    file_name = self.filelist.get(index)
+                    full_path = os.path.join(self.directory , file_name)
+                    subprocess.Popen(r'explorer /select,"{}"'.format(os.path.normpath(full_path)))
+            else:
+                messagebox.showerror('ディレクトリを開いてください')
+        else:
+            if self.senddir:
+                if len(self.sendlist.curselection()) == 0:
+                    subprocess.run(['start' , self.senddir] , shell=True)
+                else:
+                    index = self.sendlist.curselection()[0]
+                    file_name = self.sendlist.get(index)
+                    full_path = os.path.join(self.senddir , file_name)
+                    subprocess.Popen(r'explorer /select,"{}"'.format(os.path.normpath(full_path)))
+            else:
+                messagebox.showerror('ディレクトリを開いてください')
+
+    def on_open_send_dir(self , event=None):
+        self.senddir = filedialog.askdirectory()
+        if self.senddir:
+            file_list = os.listdir(self.senddir)
+            self.sendlist.delete(0 , tk.END)
+            for filename in file_list:
+                if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
+                    continue
+                self.sendlist.insert(tk.END , filename)
+            self.dest_dir = self.senddir
+            if self.source_dir:
+                written_data = [self.source_dir + '\n', self.dest_dir + '\n']
+                with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
+                    f.writelines(written_data)
+
     def on_config_panel(self , event=None):
         if not self.config_panel or not self.config_panel.winfo_exists():
             self.config_panel = tk.Toplevel()
@@ -346,9 +462,14 @@ class App(tk.Tk):
                                           text='画像情報があるとき表示する' , 
                                           variable=self.chk_var2 , 
                                           command=self.on_change2
-                                          ) 
-            self.check1.pack()
-            self.check2.pack()
+                                          )
+            self.check3 = ttk.Checkbutton(self.config_panel,
+                                          text='送り先フォルダリストボックスを表示する',
+                                          variable=self.chk_var3,
+                                          command=self.on_change3) 
+            self.check1.pack(ipadx=10 , ipady=10)
+            self.check2.pack(ipadx=10 , ipady=10)
+            self.check3.pack(ipadx=10 , ipady=10)
         else:
             self.config_panel.deiconify()
 
@@ -365,6 +486,14 @@ class App(tk.Tk):
             self.pwin.deiconify()
         else:
             self.pwin.withdraw()
+    
+    def on_change3(self):
+        checked = self.chk_var3.get()
+        if checked:
+            self.sendwin.deiconify()
+        else:
+            self.sendwin.withdraw()
+
 
     def on_copy_prompt(self , event=None):
         text = self.ptextb1.get('1.0' , 'end-1c')
@@ -377,6 +506,7 @@ class App(tk.Tk):
         self.clipboard_append(text)
 
     def on_trim(self , event=None):
+        self.unbind('<Button-1>')
         self.canvas.bind('<Button-1>' , self.on_trim_start)
         self.canvas.bind('<B1-Motion>' , self.on_drag)
         self.canvas.bind('<ButtonRelease-1>' , self.on_mouse_release)
@@ -411,6 +541,7 @@ class App(tk.Tk):
         self.canvas.unbind('<Button-1>')
         self.canvas.unbind('<B1-Motion>')
         self.canvas.unbind('<ButtonRelease-1>')
+        self.bind('<Button-1' , self.on_resize_opt)
 
     def on_mirror(self , event=None):
         if self.image:
@@ -507,71 +638,177 @@ class App(tk.Tk):
             else:
                 self.filelist.selection_set(index)
                 self.filelist.activate(index)
-            self.on_draw('_')
+            event = tk.Event()
+            event.widget = self.filelist
+            self.on_draw(event=event)
         else:
             messagebox.showerror('エラー', 'ファイルの消去に失敗しました')
 
 
     def on_up(self, event=None):
-        selected_index = self.filelist.curselection()
-        if selected_index:
-            active_index = selected_index[0]
-            if active_index >= 0:
-                self.filelist.activate(active_index)
-                self.filelist.selection_clear(0,tk.END)
-                self.filelist.selection_set(active_index)
-                self.on_draw('_')
+        widget = event.widget
+        switch = True
+        if str(widget) != '.!toplevel.!listbox':
+            switch = False
+        if switch:
+            selected_index = self.filelist.curselection()
+            if selected_index:
+                active_index = selected_index[0]
+                if active_index >= 0:
+                    self.filelist.activate(active_index)
+                    self.filelist.selection_clear(0,tk.END)
+                    self.filelist.selection_set(active_index)
+                    event = tk.Event()
+                    event.widget = self.filelist
+                    self.on_draw(event=event)
+            else:
+                return
         else:
-            return
+            selected_index = self.sendlist.curselection()
+            if selected_index:
+                active_index = selected_index[0]
+                if active_index >= 0:
+                    self.sendlist.activate(active_index)
+                    self.sendlist.selection_clear(0,tk.END)
+                    self.sendlist.selection_set(active_index)
+                    event = tk.Event()
+                    event.widget = self.sendlist
+                    self.on_draw(event=event)
+            else:
+                return
 
     def on_down(self, event=None):
-        selected_index = self.filelist.curselection()
-        if selected_index:
-            active_index = selected_index[0]
-            if active_index < self.filelist.size():
-                self.filelist.selection_clear(selected_index)
-                self.filelist.selection_set(active_index)
-                self.filelist.activate(active_index)
-                self.on_draw('_')
+        widget = event.widget
+        switch = True
+        if str(widget) != '.!toplevel.!listbox':
+            switch = False
+        if switch:
+            selected_index = self.filelist.curselection()
+            if selected_index:
+                active_index = selected_index[0]
+                if active_index < self.filelist.size():
+                    self.filelist.selection_clear(selected_index)
+                    self.filelist.selection_set(active_index)
+                    self.filelist.activate(active_index)
+                    event = tk.Event()
+                    event.widget = self.filelist
+                    self.on_draw(event=event)
+            else:
+                return
         else:
-            return
+            selected_index = self.sendlist.curselection()
+            if selected_index:
+                active_index = selected_index[0]
+                if active_index < self.sendlist.size():
+                    self.sendlist.selection_clear(selected_index)
+                    self.sendlist.selection_set(active_index)
+                    self.sendlist.activate(active_index)
+                    event = tk.Event()
+                    event.widget = self.sendlist
+                    self.on_draw(event=event)
+            else:
+                return
+
+        
+    def on_send(self , event=None):
+        if self.senddir:
+            selected_index = self.filelist.curselection()
+            if selected_index:
+                selected_index = selected_index[0]
+                target_file = self.filelist.get(selected_index)
+                full_path = os.path.join(self.directory , target_file)
+                file_list = os.listdir(self.senddir)
+                logger.debug('%s' , file_list)
+                if target_file not in file_list:
+                    dest = os.path.join(self.senddir , target_file)
+                    os.rename(full_path , dest)
+                    self.sendlist.insert(tk.END , target_file)
+                    self.filelist.delete(selected_index)
+                    if selected_index == self.filelist.size():
+                        self.filelist.selection_set(selected_index - 1)
+                        self.filelist.activate(selected_index - 1)
+                    else:
+                        self.filelist.selection_set(selected_index)
+                        self.filelist.activate(selected_index)
+                        event = tk.Event()
+                        event.widget = self.filelist
+                        self.on_draw(event=event)
+                else:
+                    messagebox.showerror('エラー','送り先に同じファイルがあります')
+        else:
+            messagebox.showerror('エラー' , '送り先フォルダを開いてください')
+
+    def dir_watcher(self , event=None):
+        if self.watcher:
+            self.watcher.stop()
+        self.watcher = DirectoryWatcher(directory=self.directory , filelist=self.filelist)
+        self.watcher.daemon = True
+        self.watcher.start()
 
     def on_open_dir(self , event=None):
         self.directory = filedialog.askdirectory()
         if self.directory:
-            if self.watcher:
-                self.watcher.stop()
-            self.watcher = DirectoryWatcher(directory=self.directory , filelist=self.filelist)
-            self.watcher.daemon = True
-            self.watcher.start()
+            self.dir_watcher(event=None)
             self.filelist.delete(0 , tk.END)
             file_list = os.listdir(self.directory)
             for filename in file_list:
                 if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist.insert(tk.END , filename)
+            self.source_dir=self.directory
+            if self.dest_dir:
+                written_data = [self.source_dir , self.dest_dir ]
+                with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
+                    f.writelines(written_data)
 
-    def on_rename(self , event=None):
-        index = self.filelist.curselection()
+
+    def on_rename(self , from_):
+        switch = True
+        if from_ == 'dst':
+            switch = False
+        if switch:
+            index = self.filelist.curselection()
+        else:
+            index = self.sendlist.curselection()
         if index:
-            item = self.filelist.get(index)
+            if switch:
+                item = self.filelist.get(index)
+                new_name = simpledialog.askstring("名前の変更" , "ファイル名を入力してください" , initialvalue=item)
+                if new_name:
+                    try:
+                        os.rename(os.path.join(self.directory , item) , os.path.join(self.directory , new_name))
+                        self.filelist.delete(index)
+                        self.filelist.insert(index , new_name)
+                        messagebox.showinfo('確認','ファイル名を変更しました')
+                    except OSError:
+                        messagebox.showerror('エラー','ファイル名の変更に失敗しました')
+            else:
+                item = self.sendlist.get(index)
+                new_name = simpledialog.askstring("名前の変更" , "ファイル名を入力してください" , initialvalue=item)
+                if new_name:
+                    try:
+                        os.rename(os.path.join(self.senddir , item) , os.path.join(self.senddir , new_name))
+                        self.sendlist.delete(index)
+                        self.sendlist.insert(index , new_name)
+                        messagebox.showinfo('確認','ファイル名を変更しました')
+                    except OSError:
+                        messagebox.showerror('エラー','ファイル名の変更に失敗しました')
 
-            new_name = simpledialog.askstring("名前の変更" , "ファイル名を入力してください" , initialvalue=item)
-            if new_name:
-                try:
-                    os.rename(os.path.join(self.directory , item) , os.path.join(self.directory , new_name))
-                    self.filelist.delete(index)
-                    self.filelist.insert(index , new_name)
-                    messagebox.showinfo('確認','ファイル名を変更しました')
-                except OSError:
-                    messagebox.showerror('エラー','ファイル名の変更に失敗しました')
-
-
-    def on_draw(self , event):
-        index = self.filelist.curselection()
+    def on_draw(self , event=None):
+        widget = event.widget
+        switch = True
+        if str(widget) == '.!toplevel.!listbox':
+            index = self.filelist.curselection()
+        else:
+            index = self.sendlist.curselection()
+            switch = False
         if index:
-            target_file = self.filelist.get(index)
-            full_path = os.path.join(self.directory , target_file)
+            if switch:
+                target_file = self.filelist.get(index)
+                full_path = os.path.join(self.directory , target_file)
+            else:
+                target_file = self.sendlist.get(index)
+                full_path = os.path.join(self.senddir , target_file)
             self.image = self.original = ImageTk.PhotoImage(Image.open(full_path))
             if self.image:
                 self.width , self.height = self.image.width() , self.image.height()
@@ -859,6 +1096,15 @@ class App(tk.Tk):
         self.resize_slidar.grid(row=0 , column=0 , pady=10)
         self.resize_label.grid(row=0 , column=1 , padx=10 ,  pady=10)
         self.resize_button.grid(row=1, column=1 , padx=10 , pady=10)
+
+    def on_resize_opt(self , event=None):
+        if self.image:
+            cv2_img = np.array(ImageTk.getimage(self.image))
+            cv2_img = cv2.resize(cv2_img , dsize=None , fx=1.05 , fy=1.05)
+            h , w , _ = cv2_img.shape
+            self.image = ImageTk.PhotoImage(Image.fromarray(cv2_img))
+            self.canvas.create_image(0, 0 , image=self.image , anchor=tk.NW)
+            self.wm_geometry(f'{w}x{h}')
 
     def update_resize_scale(self , value):
         var = self.var.get()/10
