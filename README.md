@@ -30,10 +30,10 @@ I have created a destination window for file transfer. Now, you can send files u
     It also has real-time monitoring of image files that are generated automatically by AI and continue to accumulate.
 
 ***
-大量の画像ファイル（JPGないしPNGのみ対応）の内容確認と削除を実行するツール。リストボックスにファイル一覧が表示されますので上下キーで画像を確認し削除したい場合はDeleteキーで
-削除が実行されます。このリストボックスはディレクトリをリアルタイムで監視しているのでAI画像自動生成などをしてファイルが追加されたらリアルタイムでリストボックスに反映されます。
-リストボックスで右クリックすれば画像の名前を編集できます。
-簡単な加工ツールがあります（ガウシアンぼかし、モザイク、拡大縮小、鉛筆画、RGB調整）
+StableDiffusion(AUTOMATIC1111)で生成された大量の画像ファイル（JPGないしPNGのみ対応）の内容確認と削除を実行を目的としたツール。
+リストボックスにファイル一覧が表示されますので上下キーで画像を確認し削除したい場合はDeleteキーで削除が実行されます。
+このリストボックスはディレクトリをリアルタイムで監視しているのでAI画像自動生成などをしてファイルが追加されたらリアルタイムでリストボックスに反映されます。
+簡単な画像加工ツールがあります
 
 * バージョン1.1　- ガンマ補正機能追加
 
