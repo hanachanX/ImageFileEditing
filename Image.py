@@ -16,7 +16,7 @@ import signal
 import re
 import subprocess
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , filename='tcode01.log' , level=logging.WARNING , encoding='utf-8')
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.WARNING , encoding='utf-8')
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +24,7 @@ def check_text_chunk(filepath):
     try:
         with open(filepath, 'rb') as file:
             signature = file.read(8)
-            if signature != b'\x89PNG\r\n\x1a\n':
-                logger.info('PNGファイルではありません') # 8バイトシグネチャがPNG形式でない。
+            if signature != b'\x89PNG\r\n\x1a\n': # 8バイトシグネチャがPNG形式でない。
                 return False
 
             while True:
@@ -35,20 +34,12 @@ def check_text_chunk(filepath):
                 length = int.from_bytes(length_bytes, 'big')
                 chunk_type = file.read(4)
                 if chunk_type == b'tEXt':
-                    logger.info('tEXtチャンクが存在します')
                     return True
                 file.seek(length + 4, 1)  # チャンクデータとCRC4バイトはスキップする。
-
-            logger.info('tEXtチャンクは存在しません')
             return False
     except IOError:
-        messagebox.showerror("エラー", "ファイルの読み込みエラーです。")
+        messagebox.showerror("Error", "Failed to read the file.")
         return False
-
-
-
-logging.basicConfig(filename='tcode01.log' , level=logging.INFO , encoding='utf-8')
-logger = logging.getLogger(__name__)
 
 def sepia(image):
     # NumPy配列に変換
@@ -116,7 +107,7 @@ class DirectoryWatcher(threading.Thread):
     def __init__(self , directory , filelist):
         super().__init__()
         self.directory = directory
-        self.filelist = filelist
+        self.filelist1 = filelist
         self.file_set = set()
         self.running = True
 
@@ -125,7 +116,7 @@ class DirectoryWatcher(threading.Thread):
             files = os.listdir(self.directory)
             new_files = [file for file in files if file not in self.file_set and os.path.splitext(file)[1].lower() in ('.jpeg' , '.jpg' , '.png')]
             for file in new_files:
-                self.filelist.insert(tk.END , file)
+                self.filelist1.insert(tk.END , file)
                 self.file_set.add(file)
 
             time.sleep(1)
@@ -138,178 +129,154 @@ class App(tk.Tk):
     def __init__(self , **kwargs):
         super().__init__(**kwargs)
         # メインウインドウ設定
-        self.title('画像加工')
+        self.title('IIMAGE FILE TOOL')
         self.geometry('800x800')
         self.resizable(False , False)
 
-        # ファイルリストボックスのウインドウ作成
-        self.win2 = tk.Toplevel()
-        self.win2.title('ファイル')
-        self.win2.geometry('300x800')
-        self.win2.protocol('WM_DELETE_WINDOW' , self.close_Handler)
-        self.win2.geometry(f'+{self.winfo_x()+1100}+{self.winfo_y()+300}')
+        # セカンドパネルの作成
+        self.win = tk.Toplevel()
+        self.win.title('File Info')
+        self.win.geometry('600x930')
+        self.win.protocol('WM_DELETE_WINDOW' , self.close_Handler)
+        self.win.geometry(f'+{self.winfo_x()+800}+{self.winfo_y()+500}')
 
-        # リストボックスの作成
-        self.filelist = tk.Listbox(self.win2)
-        self.filelist.pack(side=tk.LEFT , fill=tk.BOTH , expand=True)
+        self.frame1 = ttk.Frame(self.win)
+        self.frame1.grid(row=0,column=0 , pady=10) 
+        # リストボックス1の作成
 
-        # リストボックスのスクロールバーの作成
-        self.scroll = ttk.Scrollbar(self.win2 , orient=tk.VERTICAL , command=self.filelist.yview)
-        self.scroll.pack(side=tk.RIGHT , fill=tk.Y)
-        self.filelist.config(yscrollcommand=self.scroll.set)
+        self.filelist1 = tk.Listbox(self.frame1 , width=40 , height=30 )
+        self.filelist1.pack(side='left' , fill='y')
+        self.scroll1 = ttk.Scrollbar(self.frame1 , command=self.filelist1.yview)
+        self.scroll1.pack(side='left' , fill='y')
+        self.filelist1.config(yscrollcommand=self.scroll1.set)
 
-        # ファイルリストボックスウインドウにメニュー追加
-        self.filemenubar = tk.Menu(self.win2)
-        self.filemenu2 = tk.Menu(self.filemenubar , tearoff=False)
-        self.filemenu2.add_command(label='フォルダ読み込み' , command=self.on_open_dir)
-        self.filemenu2.add_command(label='エクスプローラーで開く' , command=lambda : self.on_open_explorer('src'))
-        self.filemenu2.add_command(label='リネーム' , command=lambda : self.on_rename('src'))
-        self.filemenubar.add_cascade(label='コマンド' , menu=self.filemenu2)
-        self.sendmenu = tk.Menu(self.filemenubar , tearoff=False)
-        self.win2.config(menu=self.filemenubar)
+        self.frame2 = ttk.Frame(self.win)
+        self.frame2.grid(row=0 , column=1 , pady=10)
+        # リストボックス2の作成
+        self.filelist2 = tk.Listbox(self.frame2 , width=40 , height=30)
+        self.filelist2.pack(side='left' , fill='y')
+        self.scroll2 = ttk.Scrollbar(self.frame2 , command=self.filelist2.yview)
+        self.scroll2.pack(side='left' , fill='y')
+        self.filelist2.config(yscrollcommand=self.scroll2.set)
 
-        # 送り先フォルダのリストボックス
-        self.sendwin = tk.Toplevel()
-        self.sendwin.title('送り先フォルダ')
-        self.sendwin.geometry('300x410')
-        self.sendwin.protocol('WM_DELETE_WINDOW' , self.close_Handler)
-        self.sendwin.geometry(f'+{self.winfo_x()+1400}+{self.winfo_y()+300}')
-        self.sendmenubar = tk.Menu(self.sendwin)
-        self.sendmenu = tk.Menu(self.sendmenu , tearoff=False)
-        self.sendmenu.add_command(label='フォルダ読み込み' , command=self.on_open_send_dir)
-        self.sendmenu.add_command(label='エクスプローラーで開く' , command=lambda : self.on_open_explorer('dst'))
-        self.sendmenu.add_command(label='リネーム' , command=lambda : self.on_rename('dst'))
-
-        self.sendmenubar.add_cascade(label='コマンド' , menu=self.sendmenu)
-        self.sendwin.config(menu=self.sendmenubar)
-        self.sendlist = tk.Listbox(self.sendwin) 
-        self.sendlist.pack(side=tk.LEFT , fill=tk.BOTH , expand=True)
-        self.sendscroll = ttk.Scrollbar(self.sendwin , orient=tk.VERTICAL , command=self.sendlist.yview)
-        self.sendscroll.pack(side=tk.RIGHT , fill=tk.Y)
-        self.sendlist.config(yscrollcommand=self.sendscroll.set)
-
-        # プロンプトウインドウの作成
-        self.pwin = tk.Toplevel()
-        self.pwin.title('Stable Diffusion情報')
-        self.pwin.geometry('600x350')
-        self.pwin.protocol('WM_DELETE_WINDOW' , self.close_Handler)
-        self.pwin.geometry(f'+{self.winfo_x()+1400}+{self.winfo_y()+760}')
-
+        # ラベルスタイルの設定
         style = ttk.Style()
-        style.configure('Bold.TLabel' , font=('Hiragino Kaku Gothic' , 14 , 'bold'))
+        style.configure('Bold.TLabel' , font=('Helvetica' , 12 , 'bold'))
 
-        # プロンプトウィンドウのウィジェット作成と配置
-        self.plabel1 = ttk.Label(self.pwin , text='Prompt' ,width=40 ,justify='left' , style='Bold.TLabel')
-        self.plabel2 = ttk.Label(self.pwin , text='Negative Prompt',width=40 ,justify='left', style='Bold.TLabel')
-        self.plabel3 = ttk.Label(self.pwin , text='画像生成情報',width=40, justify='left', style='Bold.TLabel')
-        self.ptextb1 = tk.Text(self.pwin , width=40 , height=5, state="disabled")
-        self.ptextb2 = tk.Text(self.pwin , width=40 , height=5, state="disabled")
-        self.ptextb3 = tk.Text(self.pwin , width=40 , height=5, state="disabled")
-        self.pscroll1 = ttk.Scrollbar(self.pwin)
-        self.pscroll2 = ttk.Scrollbar(self.pwin)
-        self.pscroll3 = ttk.Scrollbar(self.pwin)
-        self.pbutton1 = ttk.Button(self.pwin , text='Copy' , command=self.on_copy_prompt)
-        self.pbutton2 = ttk.Button(self.pwin , text='Copy' , command=self.on_copy_negative)
-        self.plabel1.grid(row=0,column=0 ,padx=10 , pady=10)
-        self.ptextb1.grid(row=1,column=0,sticky=tk.NSEW)
-        self.pscroll1.grid(row=1 , column=1 , sticky=tk.NS)
-        self.ptextb1.config(yscrollcommand=self.pscroll1.set)
-        self.pscroll1.config(command=self.ptextb1.yview)
-        self.pbutton1.grid(row=1 , column=2 , padx=10 , pady=10)
-        self.plabel2.grid(row=2 , column=0 , padx=10 , pady=10)
-        self.ptextb2.grid(row=3 , column=0 , sticky=tk.NSEW)
-        self.pscroll2.grid(row=3 , column=1 , sticky=tk.NS)
-        self.ptextb2.config(yscrollcommand=self.pscroll2.set)
-        self.pscroll2.config(command=self.ptextb1.yview)
-        self.pbutton2.grid(row=3 , column=2 , padx=10 , pady=10)
-        self.plabel3.grid(row=4 , column=0 , padx=10 , pady=10)
-        self.ptextb3.grid(row=5 , column=0 , sticky=tk.NSEW)
-        self.pscroll3.grid(row=5 , column=1 , sticky=tk.NS)
-        self.ptextb3.config(yscrollcommand=self.pscroll3.set)
-        self.pscroll3.config(command=self.ptextb3.yview)
+        # 画像生成情報表示用テキストボックスの作成
+        self.label1 = ttk.Label(self.win , text='Prompt' , width=32 , justify='left' , style='Bold.TLabel')
+        self.label2 = ttk.Label(self.win , text='Negative Prompt' , width=32, justify='left' , style='Bold.TLabel')
+        self.label3 = ttk.Label(self.win , text='Generated Info.' , width=32, justify='left' , style='Bold.TLabel')
+        self.text1 = tk.Text(self.win , width=40 , height=5 , state='disabled')
+        self.text2 = tk.Text(self.win , width=40 , height=5 , state='disabled')
+        self.text3 = tk.Text(self.win , width=40 , height=5 , state='disabled')
+        self.button1 = ttk.Button(self.win , text='Copy' , command=self.on_copy_prompt)
+        self.button2 = ttk.Button(self.win , text='Copy' , command=self.on_copy_negative)
+        self.label1.grid(row=1 , column=0 , padx=10 , pady=10 )
+        self.label2.grid(row=3 , column=0 , padx=10 , pady=10 )
+        self.label3.grid(row=5 , column=0 , padx=10 , pady=10 )
+        self.text1.grid(row=2 , column=0, columnspan=2, padx=10 , pady=10, sticky='nsew')
+        self.text2.grid(row=4 , column=0, columnspan=2, padx=10 , pady=10, sticky='nsew')
+        self.text3.grid(row=6 , column=0, columnspan=2, padx=10 , pady=10, sticky='nsew')
+        self.button1.grid(row=1 , column=1 , padx=10 , pady=10 , sticky='e')
+        self.button2.grid(row=3 , column=1 , padx=10 , pady=10 , sticky='e')
+
+        # メインメニューバーの作成
+        self.menubar = tk.Menu(self)
+        self.filemenu = tk.Menu(self.menubar , tearoff=0)
+        self.filemenu.add_command(label="Open" , command=self.on_open_file)
+        self.filemenu.add_command(label="Save" , command=self.on_save_file)
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label="Exit" , command=self.quit)
+        self.menubar.add_cascade(label='File' , menu=self.filemenu)
+
+        self.processmenu = tk.Menu(self.menubar , tearoff=0)
+        self.processmenu.add_command(label='Gaussian Blur', command=self.on_gaussian_blur)
+        self.processmenu.add_command(label='Mosaic' , command=self.on_mosaic)
+        self.processmenu.add_command(label='Pencil' , command=self.on_pencil)
+        self.processmenu.add_command(label='Resize' , command=self.on_resize)
+        self.processmenu.add_command(label='Color conv.' , command=self.on_change)
+        self.processmenu.add_command(label='Gamma corr.', command=self.on_gamma)
+        self.processmenu.add_command(label='Gray conv.' , command=self.on_gray_scale)
+        self.processmenu.add_command(label='Sepia conv.' , command=self.on_sepia)
+        self.processmenu.add_command(label='Mirror' , command=self.on_mirror)
+        self.processmenu.add_command(label='Trim' , command=self.on_trim)
+        self.menubar.add_cascade(label='Conv' , menu=self.processmenu)
+        
+        # 編集メニュー
+        self.editmenu = tk.Menu(self.menubar , tearoff=0)
+        self.editmenu.add_command(label='Paste' , command=self.on_paste)
+        self.editmenu.add_command(label='Copy', command=self.copy_to_clipboard)
+        self.editmenu.add_command(label='Undo' , command=self.undo) 
+        self.menubar.add_cascade(label='Edit' , menu=self.editmenu)
+
+        #　設定メニュー
+        self.configmenu = tk.Menu(self.menubar , tearoff=0)
+        self.configmenu.add_command(label='Settings' , command=self.on_config_panel)
+        self.menubar.add_cascade(label='Settings' , menu=self.configmenu)
+        self.config(menu=self.menubar)
+
+        # パネル2にメニュー追加
+        self.filemenubar = tk.Menu(self.win)
+        self.filemenu2 = tk.Menu(self.filemenubar , tearoff=False)
+        self.filemenu2.add_command(label='Read Folder1' , command=self.on_open_dir)
+        self.filemenu2.add_command(label='Read Folder2' , command=self.on_open_send_dir)
+        self.filemenu2.add_command(label='Open in Explorer(Left)' , command=lambda : self.on_open_explorer(1))
+        self.filemenu2.add_command(label='Open in Explorer(Right)' , command=lambda : self.on_open_explorer(2))
+        self.filemenu2.add_command(label='Rename(Left)' , command= lambda : self.on_rename(1))
+        self.filemenu2.add_command(label='Rename(Right)' , command= lambda : self.on_rename(2))
+        self.filemenubar.add_cascade(label='Command' , menu=self.filemenu2)
+        self.sendmenu = tk.Menu(self.filemenubar , tearoff=False)
+        self.win.config(menu=self.filemenubar)
 
         # Stable Diffusion情報
         self.target_text1 = ''
         self.target_text2 = ''
         self.target_text3 = ''
 
-        # メインメニューバーの作成
-        self.menubar = tk.Menu(self)
-        self.filemenu = tk.Menu(self.menubar , tearoff=0)
-        self.filemenu.add_command(label="開く" , command=self.on_open_file)
-        self.filemenu.add_command(label="保存" , command=self.on_save_file)
-        self.filemenu.add_separator()
-        self.filemenu.add_command(label="終了" , command=self.quit)
-        self.menubar.add_cascade(label='ファイル' , menu=self.filemenu)
-
-        self.processmenu = tk.Menu(self.menubar , tearoff=0)
-        self.processmenu.add_command(label='Gaussian Blur', command=self.on_gaussian_blur)
-        self.processmenu.add_command(label='モザイク' , command=self.on_mosaic)
-        self.processmenu.add_command(label='鉛筆画' , command=self.on_pencil)
-        self.processmenu.add_command(label='拡大・縮小' , command=self.on_resize)
-        self.processmenu.add_command(label='色彩変換' , command=self.on_change)
-        self.processmenu.add_command(label='ガンマ補正', command=self.on_gamma)
-        self.processmenu.add_command(label='グレースケール変換' , command=self.on_gray_scale)
-        self.processmenu.add_command(label='セピア色変換' , command=self.on_sepia)
-        self.processmenu.add_command(label='ミラー処理' , command=self.on_mirror)
-        self.processmenu.add_command(label='トリミング' , command=self.on_trim)
-        self.menubar.add_cascade(label='加工' , menu=self.processmenu)
         
-        # 編集メニュー
-        self.editmenu = tk.Menu(self.menubar , tearoff=0)
-        self.editmenu.add_command(label='貼り付け' , command=self.on_paste)
-        self.editmenu.add_command(label='コピー', command=self.copy_to_clipboard)
-        self.editmenu.add_command(label='戻す' , command=self.undo) 
-        self.menubar.add_cascade(label='編集' , menu=self.editmenu)
-
-        #　設定メニュー
-        self.configmenu = tk.Menu(self.menubar , tearoff=0)
-        self.configmenu.add_command(label='設定' , command=self.on_config_panel)
-        self.menubar.add_cascade(label='設定' , menu=self.configmenu)
-
-        self.config(menu=self.menubar)
 
         # トリミングのためのCanvasの作成
         self.canvas = tk.Canvas(self)
         self.canvas.pack(fill=tk.BOTH , expand=True)
 
+        # 汎用変数
         self.image_path = ''
-        self.directory=None # リストボックス用
-        self.senddir=None # 送り先ディレクトリ
+        self.directory=None # Sourse Directory
+        self.senddir=None # Destination Directory
  
         # ImageTk オブジェクト 
         self.image = None # PhotoImage
-        self.original = None
-        self.popup = None
-        self.width = 800
-        self.height = 800
+        self.original = None # Undo用
+        self.popup = None # ポップアップウインドウ
+        self.width = None # self.imageの幅
+        self.height = None # self.imageの高さ
 
-        self.image_arr = None
-        self.kernel_value = 5
+        # GaussianBlur関数用変数
+        self.image_arr = None # CV2 image
+        self.kernel_value = 5 
         self.sigma_value = 13
 
-        # 右クリックポップアップウィンドウ
-        self.bind('<Button-1>' , self.on_resize_opt)
-        self.bind('<Button-3>' , self.show_menu)
+        # クリックポップアップウィンドウ
+        self.bind('<Button-1>' , self.on_resize_opt) # リサイズ
+        self.bind('<Button-3>' , self.show_menu) # 編集メニュー
         
         self.start_x = None
         self.start_y = None
         self.end_x = None
         self.end_y = None
 
-        # リストボックスウインドウ用のコールバック関数の設定
-        self.filelist.bind('<Button-1>' , self.on_draw)
-        self.win2.bind('<Button-3>' , self.popup_menu)
-        self.win2.bind('<Down>' , self.on_down)
-        self.win2.bind('<Up>' , self.on_up)
-        self.win2.bind('<Right>' , self.on_send)
-        self.win2.bind('<Delete>' , self.on_delete)
-
-        # 転送先リストボックスウインドウ用のコールバック関数の設定
-        self.sendlist.bind('<Button-1>' , self.on_draw)
-        self.sendlist.bind('<Button-3>' , self.popup_menu)
-        self.sendlist.bind('<Up>' , self.on_up)
-        self.sendlist.bind('<Down>' , self.on_down)
+        # パネル2のコールバック関数の設定
+        self.filelist1.bind('<Double-Button-1>' , self.on_draw)
+        self.filelist2.bind('<Double-Button-1>' , self.on_draw)
+        self.filelist1.bind('<Button-3>' , self.popup_menu)
+        self.filelist2.bind('<Button-3>' , self.popup_menu)
+        self.filelist1.bind('<Down>' , self.on_down)
+        self.filelist2.bind('<Down>' , self.on_down)
+        self.filelist1.bind('<Up>' , self.on_up)
+        self.filelist2.bind('<Up>' , self.on_up)
+        self.filelist1.bind('<Right>' , self.on_send)
+        self.filelist1.bind('<Delete>' , self.on_delete)
 
         # サブスレッドのためのシグナルオブジェクト
         self.watcher = None
@@ -323,18 +290,14 @@ class App(tk.Tk):
         self.config_panel = None
         self.chk_var1 = tk.BooleanVar()
         self.chk_var2 = tk.BooleanVar()
-        self.chk_var3 = tk.BooleanVar()
-        self.chk_var4 = tk.BooleanVar()
         self.chk_var1.set(True)
         self.chk_var2.set(True)
-        self.chk_var3.set(True)
-        self.chk_var4.set(True)
 
         # 送り元、送り先ディレクトリ情報
         self.source_dir = ''
         self.dest_dir = ''
 
-        # ディレクトリ情報ファイル問い合わせ
+        # # ディレクトリ情報ファイル問い合わせ
 
         dirfile_dir = r'./dir_config.ini'
         if os.path.isfile(dirfile_dir):
@@ -353,14 +316,14 @@ class App(tk.Tk):
             for filename in file_list:
                 if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
                     continue
-                self.filelist.insert(tk.END , filename)
+                self.filelist1.insert(tk.END , filename)
 
         if self.dest_dir:
             file_list = os.listdir(self.dest_dir)
             for filename in file_list:
                 if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
                     continue
-                self.sendlist.insert(tk.END , filename)
+                self.filelist2.insert(tk.END , filename)
 
     def set_AI_info(self , image_path):
         with open(image_path , 'rb') as f:
@@ -385,65 +348,64 @@ class App(tk.Tk):
         self.target_text3 = re.sub(pattern3 , r'\1' , text)
 
         # 各ウィジェットに情報の挿入
-        self.ptextb1.config(state='normal')
-        self.ptextb1.delete('1.0' , tk.END)
-        self.ptextb1.insert(tk.END , self.target_text1)
-        self.ptextb1.config(state='disabled')
+        self.text1.config(state='normal')
+        self.text1.delete('1.0' , tk.END)
+        self.text1.insert(tk.END , self.target_text1)
+        self.text1.config(state='disabled')
 
-        self.ptextb2.config(state='normal')
-        self.ptextb2.delete('1.0' , tk.END)
-        self.ptextb2.insert(tk.END , self.target_text2)
-        self.ptextb2.config(state='disabled')
+        self.text2.config(state='normal')
+        self.text2.delete('1.0' , tk.END)
+        self.text2.insert(tk.END , self.target_text2)
+        self.text2.config(state='disabled')
 
-        self.ptextb3.config(state='normal')
-        self.ptextb3.delete('1.0' , tk.END)
-        self.ptextb3.insert(tk.END , self.target_text3)
-        self.ptextb3.config(state='disabled')
+        self.text3.config(state='normal')
+        self.text3.delete('1.0' , tk.END)
+        self.text3.insert(tk.END , self.target_text3)
+        self.text3.config(state='disabled')
 
     def popup_menu(self , event):
-        widget = event.widget
-        if str(widget) == '.!toplevel.!listbox':
-            self.filemenu2.post(event.x_root , event.y_root)
-        else:
-            self.sendmenu.post(event.x_root , event.y_root)
+        '''
+        パネル2の右クリックポップアップウインドウ
+        '''
+        self.filemenu2.post(event.x_root , event.y_root)
 
-    def on_open_explorer(self , from_):
+    def on_open_explorer(self , value):
         switch = True
-        if from_ == 'dst':
+        if value ==  2:
             switch = False
         if switch:
             if self.directory:
                 logger.debug('on_open_explorer: %s' , self.directory)
-                if len(self.filelist.curselection()) == 0:
+                if len(self.filelist1.curselection()) == 0:
                     subprocess.run(['start' , self.directory] , shell=True)
                 else:
-                    index = self.filelist.curselection()[0]
-                    file_name = self.filelist.get(index)
+                    index = self.filelist1.curselection()[0]
+                    file_name = self.filelist1.get(index)
                     full_path = os.path.join(self.directory , file_name)
                     subprocess.Popen(r'explorer /select,"{}"'.format(os.path.normpath(full_path)))
             else:
-                messagebox.showerror('ディレクトリを開いてください')
+                messagebox.showerror('Error' , 'Open Image Folder')
         else:
             if self.senddir:
-                if len(self.sendlist.curselection()) == 0:
+                if len(self.filelist2.curselection()) == 0:
                     subprocess.run(['start' , self.senddir] , shell=True)
                 else:
-                    index = self.sendlist.curselection()[0]
-                    file_name = self.sendlist.get(index)
+                    index = self.filelist2.curselection()[0]
+                    file_name = self.filelist2.get(index)
                     full_path = os.path.join(self.senddir , file_name)
                     subprocess.Popen(r'explorer /select,"{}"'.format(os.path.normpath(full_path)))
             else:
-                messagebox.showerror('ディレクトリを開いてください')
+                messagebox.showerror('Error' , 'Open Image Folder')
 
     def on_open_send_dir(self , event=None):
         self.senddir = filedialog.askdirectory()
         if self.senddir:
             file_list = os.listdir(self.senddir)
-            self.sendlist.delete(0 , tk.END)
+            self.filelist2.delete(0 , tk.END)
             for filename in file_list:
                 if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
                     continue
-                self.sendlist.insert(tk.END , filename)
+                self.filelist2.insert(tk.END , filename)
             self.dest_dir = self.senddir
             if self.source_dir:
                 written_data = [self.source_dir + '\n', self.dest_dir + '\n']
@@ -453,68 +415,44 @@ class App(tk.Tk):
     def on_config_panel(self , event=None):
         if not self.config_panel or not self.config_panel.winfo_exists():
             self.config_panel = tk.Toplevel()
-            self.config_panel.title('設定')
+            self.config_panel.title('Settings')
             self.config_panel.geometry(f'+{self.winfo_x()}+{self.winfo_y()}')
             self.check1 = ttk.Checkbutton(self.config_panel, 
-                                          text='ファイルリストボックスを表示する' , 
+                                          text='Display file information window' , 
                                           variable=self.chk_var1 , 
                                           command=self.on_change1
                                           )
             self.check2 = ttk.Checkbutton(self.config_panel, 
-                                          text='画像情報があるとき表示する' , 
+                                          text='Enable image zoom on left-click' , 
                                           variable=self.chk_var2 , 
                                           command=self.on_change2
                                           )
-            self.check3 = ttk.Checkbutton(self.config_panel,
-                                          text='送り先フォルダリストボックスを表示する',
-                                          variable=self.chk_var3,
-                                          command=self.on_change3)            
-            self.check4 = ttk.Checkbutton(self.config_panel,
-                                          text='左クリックによる拡大機能を有効にする',
-                                          variable=self.chk_var4,
-                                          command=self.on_change4) 
             self.check1.pack(ipadx=10 , ipady=10)
             self.check2.pack(ipadx=10 , ipady=10)
-            self.check3.pack(ipadx=10 , ipady=10)
-            self.check4.pack(ipadx=10 , ipady=10)
         else:
             self.config_panel.deiconify()
 
     def on_change1(self , event=None):
         checked = self.chk_var1.get()
         if checked:
-            self.win2.deiconify()
+            self.win.deiconify()
         else:
-            self.win2.withdraw()
+            self.win.withdraw()
 
-    def on_change2(self , event=None):
+    def on_change2(self):
         checked = self.chk_var2.get()
-        if checked:
-            self.pwin.deiconify()
-        else:
-            self.pwin.withdraw()
-    
-    def on_change3(self):
-        checked = self.chk_var3.get()
-        if checked:
-            self.sendwin.deiconify()
-        else:
-            self.sendwin.withdraw()
-
-    def on_change4(self):
-        checked = self.chk_var4.get()
         if checked:
             self.bind('<Button-1>' , self.on_resize_opt)
         else:
             self.unbind('<Button-1>')
 
     def on_copy_prompt(self , event=None):
-        text = self.ptextb1.get('1.0' , 'end-1c')
+        text = self.text1.get('1.0' , 'end-1c')
         self.clipboard_clear()
         self.clipboard_append(text)
 
     def on_copy_negative(self , event=None):
-        text = self.ptextb2.get('1.0' , 'end-1c')
+        text = self.text2.get('1.0' , 'end-1c')
         self.clipboard_clear()
         self.clipboard_append(text)
 
@@ -539,7 +477,7 @@ class App(tk.Tk):
         self.canvas.create_rectangle(self.start_x , self.start_y , event.x , event.y , outline='blue' , tags='rect')
         self.end_x = event.x
         self.end_y = event.y
-        result = messagebox.askyesno('確認' , '矩形範囲をトリミングします。よろしいですか？')
+        result = messagebox.askyesno('Confirm' , 'Crop the rectangular region. Are you sure?')
         if result:
             self.canvas.delete('rect')
             PIL_img = ImageTk.getimage(self.image)
@@ -563,7 +501,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_img))
             self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         else:
-            messagebox.showinfo('確認' , '画像を表示してください')
+            messagebox.showinfo('Confirm' , 'Display Image')
 
     def on_sepia(self , event=None):
         if self.image:
@@ -576,7 +514,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(Image.fromarray(sepia_image))
             self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         else:
-            messagebox.showinfo('確認' , '画像を表示してください')
+            messagebox.showinfo('Confirm' , 'Display Image')
 
     def on_gray_scale(self , event=None):
         if self.image:
@@ -585,16 +523,16 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_image))
             self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
         else:
-            messagebox.showinfo('確認' , '画像を表示してください')
+            messagebox.showinfo('Confirm' , 'Display Image')
 
     def on_gamma(self , event=None):
         if not self.gamma:
             self.gamma = tk.Toplevel()
-            self.gamma.title('ガンマ補正')
+            self.gamma.title('Gamma Correction')
             self.gamma.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()+20}')
             self.gamma_var = tk.DoubleVar()
             self.gamma_var.set(22)
-            self.label_for_gamma = ttk.Label(self.gamma , text='補正値')
+            self.label_for_gamma = ttk.Label(self.gamma , text='Correction Value')
             self.scale_for_gamma = ttk.Scale(self.gamma , 
                                              from_=1 , 
                                              to=50 , 
@@ -611,11 +549,11 @@ class App(tk.Tk):
     
     def update_gamma_scale(self , value):
         val = self.gamma_var.get()/10
-        self.label_for_gamma.config(text=f'補正値:{val:.2f}')
+        self.label_for_gamma.config(text=f'Correction Value:{val:.2f}')
 
     def on_exec_gamma(self , event=None):
         gamma = self.gamma_var.get()/10.0
-        logger.debug('ガンマ補正実行 event:%s gamma_var:%s' , event , gamma)
+        logger.debug('execute gamma correction event:%s gamma_var:%s' , event , gamma)
         inv_gamma = 1.0 / gamma
         image_cv2 = np.array(ImageTk.getimage(self.image))
         corrected_image = np.power(image_cv2 / 255.0 , inv_gamma) *255.0
@@ -628,7 +566,7 @@ class App(tk.Tk):
         self.gamma = False
 
     def close_Handler(self , event=None):
-        messagebox.showinfo('確認', '閉じるボタンは無効です')
+        messagebox.showinfo('Confirm', 'The close button is disabled')
         return
 
     def signal_handler(self , signal , frame):
@@ -638,54 +576,54 @@ class App(tk.Tk):
         exit()
 
     def on_delete(self, event=None):
-        index = self.filelist.curselection()
+        index = self.filelist1.curselection()
         if index:
             index = index[0]
-            selected_file = self.filelist.get(index)
+            selected_file = self.filelist1.get(index)
             os.remove(os.path.join(self.directory, selected_file))
-            self.filelist.delete(index)
-            if index == self.filelist.size():
+            self.filelist1.delete(index)
+            if index == self.filelist1.size():
                 # 最後の項目を削除した場合、選択を前の項目に変更
-                self.filelist.selection_set(index - 1)
-                self.filelist.activate(index - 1)
+                self.filelist1.selection_set(index - 1)
+                self.filelist1.activate(index - 1)
             else:
-                self.filelist.selection_set(index)
-                self.filelist.activate(index)
+                self.filelist1.selection_set(index)
+                self.filelist1.activate(index)
             event = tk.Event()
-            event.widget = self.filelist
+            event.widget = self.filelist1
             self.on_draw(event=event)
         else:
-            messagebox.showerror('エラー', 'ファイルの消去に失敗しました')
+            messagebox.showerror('Error', 'Failed to delete file')
 
 
     def on_up(self, event=None):
         widget = event.widget
         switch = True
-        if str(widget) != '.!toplevel.!listbox':
+        if str(widget) != '.!toplevel.!frame.!listbox':
             switch = False
         if switch:
-            selected_index = self.filelist.curselection()
+            selected_index = self.filelist1.curselection()
             if selected_index:
-                active_index = selected_index[0]
+                active_index = int(selected_index[0]) - 1
                 if active_index >= 0:
-                    self.filelist.activate(active_index)
-                    self.filelist.selection_clear(0,tk.END)
-                    self.filelist.selection_set(active_index)
+                    self.filelist1.selection_clear(0,tk.END)
+                    self.filelist1.selection_set(active_index)
+                    self.filelist1.see(active_index)
                     event = tk.Event()
-                    event.widget = self.filelist
+                    event.widget = self.filelist1
                     self.on_draw(event=event)
             else:
                 return
         else:
-            selected_index = self.sendlist.curselection()
+            selected_index = self.filelist2.curselection()
             if selected_index:
-                active_index = selected_index[0]
+                active_index = int(selected_index[0]) - 1
                 if active_index >= 0:
-                    self.sendlist.activate(active_index)
-                    self.sendlist.selection_clear(0,tk.END)
-                    self.sendlist.selection_set(active_index)
+                    self.filelist2.selection_clear(0,tk.END)
+                    self.filelist2.see(active_index)
+                    self.filelist2.selection_set(active_index)
                     event = tk.Event()
-                    event.widget = self.sendlist
+                    event.widget = self.filelist2
                     self.on_draw(event=event)
             else:
                 return
@@ -693,31 +631,29 @@ class App(tk.Tk):
     def on_down(self, event=None):
         widget = event.widget
         switch = True
-        if str(widget) != '.!toplevel.!listbox':
+        if str(widget) != '.!toplevel.!frame.!listbox':
             switch = False
         if switch:
-            selected_index = self.filelist.curselection()
+            selected_index = self.filelist1.curselection()
             if selected_index:
-                active_index = selected_index[0]
-                if active_index < self.filelist.size():
-                    self.filelist.selection_clear(selected_index)
-                    self.filelist.selection_set(active_index)
-                    self.filelist.activate(active_index)
+                active_index = int(selected_index[0]) + 1
+                if active_index < self.filelist1.size():
+                    self.filelist1.selection_clear(selected_index)
+                    self.filelist1.selection_set(active_index)
                     event = tk.Event()
-                    event.widget = self.filelist
+                    event.widget = self.filelist1
                     self.on_draw(event=event)
             else:
                 return
         else:
-            selected_index = self.sendlist.curselection()
+            selected_index = self.filelist2.curselection()
             if selected_index:
-                active_index = selected_index[0]
-                if active_index < self.sendlist.size():
-                    self.sendlist.selection_clear(selected_index)
-                    self.sendlist.selection_set(active_index)
-                    self.sendlist.activate(active_index)
+                active_index = int(selected_index[0]) + 1
+                if active_index < self.filelist2.size():
+                    self.filelist2.selection_clear(selected_index)
+                    self.filelist2.selection_set(active_index)
                     event = tk.Event()
-                    event.widget = self.sendlist
+                    event.widget = self.filelist2
                     self.on_draw(event=event)
             else:
                 return
@@ -725,36 +661,36 @@ class App(tk.Tk):
         
     def on_send(self , event=None):
         if self.senddir:
-            selected_index = self.filelist.curselection()
+            selected_index = self.filelist1.curselection()
             if selected_index:
                 selected_index = selected_index[0]
-                target_file = self.filelist.get(selected_index)
+                target_file = self.filelist1.get(selected_index)
                 full_path = os.path.join(self.directory , target_file)
                 file_list = os.listdir(self.senddir)
                 logger.debug('%s' , file_list)
                 if target_file not in file_list:
                     dest = os.path.join(self.senddir , target_file)
                     os.rename(full_path , dest)
-                    self.sendlist.insert(tk.END , target_file)
-                    self.filelist.delete(selected_index)
-                    if selected_index == self.filelist.size():
-                        self.filelist.selection_set(selected_index - 1)
-                        self.filelist.activate(selected_index - 1)
+                    self.filelist2.insert(tk.END , target_file)
+                    self.filelist1.delete(selected_index)
+                    if selected_index == self.filelist1.size():
+                        self.filelist1.selection_set(selected_index - 1)
+                        self.filelist1.activate(selected_index - 1)
                     else:
-                        self.filelist.selection_set(selected_index)
-                        self.filelist.activate(selected_index)
+                        self.filelist1.selection_set(selected_index)
+                        self.filelist1.activate(selected_index)
                         event = tk.Event()
-                        event.widget = self.filelist
+                        event.widget = self.filelist1
                         self.on_draw(event=event)
                 else:
-                    messagebox.showerror('エラー','送り先に同じファイルがあります')
+                    messagebox.showerror('Error','There is already a file with the same name at the destination')
         else:
-            messagebox.showerror('エラー' , '送り先フォルダを開いてください')
+            messagebox.showerror('Error' , 'Open the destination folder')
 
     def dir_watcher(self , event=None):
         if self.watcher:
             self.watcher.stop()
-        self.watcher = DirectoryWatcher(directory=self.directory , filelist=self.filelist)
+        self.watcher = DirectoryWatcher(directory=self.directory , filelist=self.filelist1)
         self.watcher.daemon = True
         self.watcher.start()
 
@@ -762,65 +698,64 @@ class App(tk.Tk):
         self.directory = filedialog.askdirectory()
         if self.directory:
             self.dir_watcher(event=None)
-            self.filelist.delete(0 , tk.END)
+            self.filelist1.delete(0 , tk.END)
             file_list = os.listdir(self.directory)
             for filename in file_list:
                 if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
                     continue
-                self.filelist.insert(tk.END , filename)
+                self.filelist1.insert(tk.END , filename)
             self.source_dir=self.directory
             if self.dest_dir:
                 written_data = [self.source_dir , self.dest_dir ]
                 with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
                     f.writelines(written_data)
 
-
-    def on_rename(self , from_):
+    def on_rename(self , value):
         switch = True
-        if from_ == 'dst':
+        if value == 2:
             switch = False
         if switch:
-            index = self.filelist.curselection()
+            index = self.filelist1.curselection()
         else:
-            index = self.sendlist.curselection()
+            index = self.filelist2.curselection()
         if index:
             if switch:
-                item = self.filelist.get(index)
-                new_name = simpledialog.askstring("名前の変更" , "ファイル名を入力してください" , initialvalue=item)
+                item = self.filelist1.get(index)
+                new_name = simpledialog.askstring("Rename" , "Input New Filename:" , initialvalue=item)
                 if new_name:
                     try:
                         os.rename(os.path.join(self.directory , item) , os.path.join(self.directory , new_name))
-                        self.filelist.delete(index)
-                        self.filelist.insert(index , new_name)
-                        messagebox.showinfo('確認','ファイル名を変更しました')
+                        self.filelist1.delete(index)
+                        self.filelist1.insert(index , new_name)
+                        messagebox.showinfo('Confirm','The file name has been changed.')
                     except OSError:
-                        messagebox.showerror('エラー','ファイル名の変更に失敗しました')
+                        messagebox.showerror('error','Failed to change Filename.')
             else:
-                item = self.sendlist.get(index)
-                new_name = simpledialog.askstring("名前の変更" , "ファイル名を入力してください" , initialvalue=item)
+                item = self.filelist2.get(index)
+                new_name = simpledialog.askstring("Rename" , "Input New Filename:" , initialvalue=item)
                 if new_name:
                     try:
                         os.rename(os.path.join(self.senddir , item) , os.path.join(self.senddir , new_name))
-                        self.sendlist.delete(index)
-                        self.sendlist.insert(index , new_name)
-                        messagebox.showinfo('確認','ファイル名を変更しました')
+                        self.filelist2.delete(index)
+                        self.filelist2.insert(index , new_name)
+                        messagebox.showinfo('Confirm','The file name has been changed.')
                     except OSError:
-                        messagebox.showerror('エラー','ファイル名の変更に失敗しました')
+                        messagebox.showerror('Error','Failed to change Filename.')
 
     def on_draw(self , event=None):
         widget = event.widget
         switch = True
-        if str(widget) == '.!toplevel.!listbox':
-            index = self.filelist.curselection()
+        if str(widget) == '.!toplevel.!frame.!listbox':
+            index = self.filelist1.curselection()
         else:
-            index = self.sendlist.curselection()
+            index = self.filelist2.curselection()
             switch = False
         if index:
             if switch:
-                target_file = self.filelist.get(index)
+                target_file = self.filelist1.get(index)
                 full_path = os.path.join(self.directory , target_file)
             else:
-                target_file = self.sendlist.get(index)
+                target_file = self.filelist2.get(index)
                 full_path = os.path.join(self.senddir , target_file)
             self.image = self.original = ImageTk.PhotoImage(Image.open(full_path))
             if self.image:
@@ -833,27 +768,27 @@ class App(tk.Tk):
                     if check_text_chunk(full_path):
                         self.set_AI_info(full_path)
                     else:
-                        self.ptextb1.config(state='normal')
-                        self.ptextb2.config(state='normal')
-                        self.ptextb3.config(state='normal')
-                        self.ptextb1.delete('1.0' , tk.END)
-                        self.ptextb2.delete('1.0' , tk.END)
-                        self.ptextb3.delete('1.0' , tk.END)
-                        self.ptextb1.config(state='disabled')
-                        self.ptextb2.config(state='disabled')
-                        self.ptextb3.config(state='disabled')
+                        self.text1.config(state='normal')
+                        self.text2.config(state='normal')
+                        self.text3.config(state='normal')
+                        self.text1.delete('1.0' , tk.END)
+                        self.text2.delete('1.0' , tk.END)
+                        self.text3.delete('1.0' , tk.END)
+                        self.text1.config(state='disabled')
+                        self.text2.config(state='disabled')
+                        self.text3.config(state='disabled')
                 else:
-                    self.ptextb1.config(state='normal')
-                    self.ptextb2.config(state='normal')
-                    self.ptextb3.config(state='normal')
-                    self.ptextb1.delete('1.0' , tk.END)
-                    self.ptextb2.delete('1.0' , tk.END)
-                    self.ptextb3.delete('1.0' , tk.END)
-                    self.ptextb1.config(state='disabled')
-                    self.ptextb2.config(state='disabled')
-                    self.ptextb3.config(state='disabled')
+                    self.text1.config(state='normal')
+                    self.text2.config(state='normal')
+                    self.text3.config(state='normal')
+                    self.text1.delete('1.0' , tk.END)
+                    self.text2.delete('1.0' , tk.END)
+                    self.text3.delete('1.0' , tk.END)
+                    self.text1.config(state='disabled')
+                    self.text2.config(state='disabled')
+                    self.text3.config(state='disabled')
             else:
-                messagebox.showerror('エラー','画像を表示してください')
+                messagebox.showerror('Error','Display Image.')
 
     def on_open_file(self , event=None):
         filetype =[('JPEG files' , '*.jpg;*.jpeg') , ('PNG files' , '*.png')]
@@ -869,25 +804,25 @@ class App(tk.Tk):
                 if check_text_chunk(self.image_path):
                     self.set_AI_info(self.image_path)
                 else:
-                    self.ptextb1.config(state='normal')
-                    self.ptextb2.config(state='normal')
-                    self.ptextb3.config(state='normal')
-                    self.ptextb1.delete('1.0' , tk.END)
-                    self.ptextb2.delete('1.0' , tk.END)
-                    self.ptextb3.delete('1.0' , tk.END)
-                    self.ptextb1.config(state='disabled')
-                    self.ptextb2.config(state='disabled')
-                    self.ptextb3.config(state='disabled')
+                    self.text1.config(state='normal')
+                    self.text2.config(state='normal')
+                    self.text3.config(state='normal')
+                    self.text1.delete('1.0' , tk.END)
+                    self.text2.delete('1.0' , tk.END)
+                    self.text3.delete('1.0' , tk.END)
+                    self.text1.config(state='disabled')
+                    self.text2.config(state='disabled')
+                    self.text3.config(state='disabled')
             else:
-                self.ptextb1.config(state='normal')
-                self.ptextb2.config(state='normal')
-                self.ptextb3.config(state='normal')
-                self.ptextb1.delete('1.0' , tk.END)
-                self.ptextb2.delete('1.0' , tk.END)
-                self.ptextb3.delete('1.0' , tk.END)
-                self.ptextb1.config(state='disabled')
-                self.ptextb2.config(state='disabled')
-                self.ptextb3.config(state='disabled')
+                self.text1.config(state='normal')
+                self.text2.config(state='normal')
+                self.text3.config(state='normal')
+                self.text1.delete('1.0' , tk.END)
+                self.text2.delete('1.0' , tk.END)
+                self.text3.delete('1.0' , tk.END)
+                self.text1.config(state='disabled')
+                self.text2.config(state='disabled')
+                self.text3.config(state='disabled')
             self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
             self.wm_geometry(f'{self.width}x{self.height}')
 
@@ -898,7 +833,7 @@ class App(tk.Tk):
                 name = tk_to_pil(self.image)
                 name.save(self.image_path)
             else:
-                messagebox.showerror('エラー','画像を表示してください')
+                messagebox.showerror('Error','Display Image')
 
     def on_gaussian_blur(self , event=None):
         if self.image:
@@ -907,12 +842,12 @@ class App(tk.Tk):
             self.image_arr = cv2.cvtColor(self.image_arr , cv2.COLOR_RGB2BGR)
             self.popup_gaussian()
         else:
-            messagebox.showerror('エラー','画像を表示してください')
+            messagebox.showerror('Error','Display Image')
             
     def on_mosaic(self , enent=None):
         global top_window
         top_window = tk.Toplevel()
-        top_window.title('モザイク設定')
+        top_window.title('Settings Mosaic')
         self.slidar_var = tk.DoubleVar()
         self.slidar_var.set(10.0)
         self.frame_mosaic = tk.Frame(top_window)
@@ -926,7 +861,7 @@ class App(tk.Tk):
                                         variable=self.slidar_var,
                                         command=self.update_mosaic_slidar)
         self.mosaic_exec_button = ttk.Button(self.frame_mosaic , text='＞',command=self.on_exec_mosaic)
-        self.undo_button = ttk.Button(self.frame_mosaic , text='元に戻す' , command=self.undo)
+        self.undo_button = ttk.Button(self.frame_mosaic , text='Undo' , command=self.undo)
         self.mosaic_slidar.grid(row=0 , column= 0 , pady=10)
         self.mosaic_slidar_label.grid(row=0 , column=1 , pady=10)
         self.mosaic_exec_button.grid(row=1 , column=1 , padx=10 , pady=10)
@@ -941,11 +876,11 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(img)
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
         else:
-            messagebox.showerror('エラー','画像を表示してください')
+            messagebox.showerror('Error','Display Image')
 
     def undo(self , event=None):
         if not self.original:
-            messagebox.showerror('エラー','画像データがありません')
+            messagebox.showerror('Error','No image data available.')
             return
         image = tk_to_cv2(self.original)
         h , w , _ = image.shape
@@ -957,11 +892,11 @@ class App(tk.Tk):
     
     def update_mosaic_slidar(self , event):
         var = self.slidar_var.get()
-        self.mosaic_slidar_label.config(text=f'強さ{var:.2f}')
+        self.mosaic_slidar_label.config(text=f'Strength{var:.2f}')
         
     def on_exec_mosaic(self,event=None):
         if not self.image: #PhotoImage
-            self.mosaic_slidar_label.config(text='画像を表示させてください')
+            self.mosaic_slidar_label.config(text='Display Image')
             return
         block_size = int(self.slidar_var.get())
         # varが大きいほど縮小率が上がる
@@ -981,8 +916,8 @@ class App(tk.Tk):
     def popup_gaussian(self):
         global top_window
         top_window = tk.Toplevel(self)
-        top_window.title('設定')
-        label1 = ttk.Label(top_window , text='カーネルサイズ')
+        top_window.title('Settings')
+        label1 = ttk.Label(top_window , text='Kernel size')
         self.label_kernel = ttk.Label(top_window ,text=None)
         self.kernel_value = tk.DoubleVar(value=5.0)
         scale1 = ttk.Scale(
@@ -1010,7 +945,7 @@ class App(tk.Tk):
         label2.grid(row=5 , column=0 , padx=10)
         scale2.grid(row=6 , column=0 , padx=10)
         self.label_sigma.grid(row=6 , column=1 , padx=10)
-        button = ttk.Button(top_window , text='変換' , command=self.on_Gaussian)
+        button = ttk.Button(top_window , text='Convert' , command=self.on_Gaussian)
         button.grid(row=7 , column=1 , padx=10 , pady=10)
 
     def update_label_kernel(self , value):
@@ -1038,22 +973,22 @@ class App(tk.Tk):
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
             top_window.destroy()
         else:
-            messagebox.showerror('エラー','画像を表示してください')
+            messagebox.showerror('Error','Display Image')
 
     def show_menu(self , event=None):
         self.editmenu.post(event.x_root , event.y_root)
 
     def on_paste(self , event=None):
         self.image = ImageGrab.grabclipboard()
-        self.ptextb1.config(state='normal')
-        self.ptextb2.config(state='normal')
-        self.ptextb3.config(state='normal')
-        self.ptextb1.delete('1.0' , tk.END)
-        self.ptextb2.delete('1.0' , tk.END)
-        self.ptextb3.delete('1.0' , tk.END)
-        self.ptextb1.config(state='disabled')
-        self.ptextb2.config(state='disabled')
-        self.ptextb3.config(state='disabled')
+        self.text1.config(state='normal')
+        self.text2.config(state='normal')
+        self.text3.config(state='normal')
+        self.text1.delete('1.0' , tk.END)
+        self.text2.delete('1.0' , tk.END)
+        self.text3.delete('1.0' , tk.END)
+        self.text1.config(state='disabled')
+        self.text2.config(state='disabled')
+        self.text3.config(state='disabled')
         if isinstance(self.image , Image.Image):
             self.image = self.image.convert('RGB')
             self.width , self.height = self.image.size
@@ -1082,7 +1017,7 @@ class App(tk.Tk):
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
         else:
-            messagebox.showerror('エラー','画像を表示してください')
+            messagebox.showerror('Error','Display Image')
 
     def copy_to_clipboard(self , event=None):
         if self.image:
@@ -1095,13 +1030,13 @@ class App(tk.Tk):
             output.close()
             send_to_clipboard(win32clipboard.CF_DIB, data)
         else:
-            messagebox.showerror('エラー','画像を表示してください')
+            messagebox.showerror('Error','Display Image')
 
     def on_resize(self , event=None):
         global top_window
         top_window = tk.Toplevel()
-        top_window.title('拡大・縮小')
-        self.resize_label = ttk.Label(top_window , text='倍率')
+        top_window.title('Resize')
+        self.resize_label = ttk.Label(top_window , text='Magnification')
         self.var = tk.DoubleVar()
         self.var.set(11.0)
         self.resize_slidar = ttk.Scale(top_window , from_=1 , to=30 , length=200 , variable=self.var , command=self.update_resize_scale)
@@ -1121,7 +1056,7 @@ class App(tk.Tk):
 
     def update_resize_scale(self , value):
         var = self.var.get()/10
-        self.resize_label.config(text=f'倍率:{var:.2f}')
+        self.resize_label.config(text=f'Magnification:{var:.2f}')
 
     def on_exec_resize(self , event=None):
         if self.image:
@@ -1135,16 +1070,16 @@ class App(tk.Tk):
             self.wm_geometry(str(width) +'x' + str(height))
             top_window.destroy()
         else:
-            messagebox.showerror('エラー','画像を表示してください')
+            messagebox.showerror('Error','Display Image')
             top_window.destroy()
     
     def on_change(self,event=None):
         self.popup = tk.Toplevel()
-        self.popup.title('チャンネル値変更')
+        self.popup.title('Change Channel Value')
         self.popup.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()-20}')
-        self.label1 = ttk.Label(self.popup,text='青')
-        self.label2 = ttk.Label(self.popup,text='緑')
-        self.label3 = ttk.Label(self.popup,text='赤')
+        self.label1 = ttk.Label(self.popup,text='Blue')
+        self.label2 = ttk.Label(self.popup,text='Green')
+        self.label3 = ttk.Label(self.popup,text='Red')
         self.var_B = tk.DoubleVar()
         self.var_G = tk.DoubleVar()
         self.var_R = tk.DoubleVar()
@@ -1183,15 +1118,15 @@ class App(tk.Tk):
         
     def update_blue(self , value):
         val = self.var_B.get()/10
-        self.label1.config(text=f'青:{val:.1f}')
+        self.label1.config(text=f'B:{val:.1f}')
         
     def update_green(self , value):
         val = self.var_G.get()/10
-        self.label2.config(text=f'緑:{val:.1f}')
+        self.label2.config(text=f'G:{val:.1f}')
         
     def update_red(self , value):
         val = self.var_R.get()/10
-        self.label3.config(text=f'赤:{val:.1f}')
+        self.label3.config(text=f'R:{val:.1f}')
     
     def on_exec_change(self , event=None):
         if self.image:
@@ -1218,7 +1153,7 @@ class App(tk.Tk):
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
             self.popup.destroy()
         else:
-            messagebox.showerror('エラー','画像を表示してください')
+            messagebox.showerror('Error','Display Image')
             
     def quit(self):
         self.destroy()
