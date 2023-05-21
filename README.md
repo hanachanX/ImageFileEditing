@@ -1,11 +1,11 @@
-# The author is a beginner in programming!!!
+# The author is A BIGINNER in programming!!!　Please be tolerant
 ***
 
 # Function Description #
 This app is a tool for managing files created in large quantities by StableDiffusion (AUTOMATIC1111). It also has simple image editing functions. It does not work on Mac. It extracts image generation information embedded in PNG files. It is a fast and efficient image viewer. Unwanted works can be deleted with the Delete key. You can send image files to your favorite folder using the right arrow key. You can switch images using the up and down arrow keys. The information of the source folder and destination folder, once loaded, is recorded in a file and will be automatically loaded in subsequent sessions.
 
 * Version 1.6
-    - I have created a destination window for file transfer. Now, you can send files using the "→" button. I have also implemented the functionality to open the currently displayed image file in the File Explorer. Additionally, I have enabled the main window's image to be zoomed in by 1.05 times when left-clicked. Various bugs have been fixed as well.
+I have created a destination window for file transfer. Now, you can send files using the "→" button. I have also implemented the functionality to open the currently displayed image file in the File Explorer. Additionally, I have enabled the main window's image to be zoomed in by 1.05 times when left-clicked. Various bugs have been fixed as well.
 
 
 * Version 1.5
@@ -48,6 +48,7 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 * バージョン1.6 - ファイルの転送先のウインドウを作成しました。→ボタンで送ることができるようになりました。
 現在表示中の画像のファイルをエクスプローラーで開くことができるようにしました。
-メインウインドウの画像を左クリックすると1.05倍づつ拡大するようにしました。その他バグを修正しました。
+メインウインドウの画像を左クリックすると1.05倍づつ拡大するようにしました。リストボックスと送り先フォルダ（お気に入り？傑作？）の情報は"dir_config.ini"というファイルに記録されるので
+次回の起動時にいちいちフォルダを指定する必要がありません。その他バグを修正しました。
 
 * 追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
