@@ -23,7 +23,7 @@ I have created a destination window for file transfer. Now, you can send files u
 * Version 1.2
     convert Gray_scale feature addition
     
-*Version 1.1
+* Version 1.1
     Gamma correction feature addition
 
 * Version 1.0
