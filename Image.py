@@ -324,9 +324,11 @@ class App(tk.Tk):
         self.chk_var1 = tk.BooleanVar()
         self.chk_var2 = tk.BooleanVar()
         self.chk_var3 = tk.BooleanVar()
+        self.chk_var4 = tk.BooleanVar()
         self.chk_var1.set(True)
         self.chk_var2.set(True)
         self.chk_var3.set(True)
+        self.chk_var4.set(True)
 
         # 送り元、送り先ディレクトリ情報
         self.source_dir = ''
@@ -466,10 +468,15 @@ class App(tk.Tk):
             self.check3 = ttk.Checkbutton(self.config_panel,
                                           text='送り先フォルダリストボックスを表示する',
                                           variable=self.chk_var3,
-                                          command=self.on_change3) 
+                                          command=self.on_change3)            
+            self.check4 = ttk.Checkbutton(self.config_panel,
+                                          text='左クリックによる拡大機能を有効にする',
+                                          variable=self.chk_var4,
+                                          command=self.on_change4) 
             self.check1.pack(ipadx=10 , ipady=10)
             self.check2.pack(ipadx=10 , ipady=10)
             self.check3.pack(ipadx=10 , ipady=10)
+            self.check4.pack(ipadx=10 , ipady=10)
         else:
             self.config_panel.deiconify()
 
@@ -494,6 +501,12 @@ class App(tk.Tk):
         else:
             self.sendwin.withdraw()
 
+    def on_change4(self):
+        checked = self.chk_var4.get()
+        if checked:
+            self.bind('<Button-1>' , self.on_resize_opt)
+        else:
+            self.unbind('<Button-1>')
 
     def on_copy_prompt(self , event=None):
         text = self.ptextb1.get('1.0' , 'end-1c')
@@ -541,7 +554,7 @@ class App(tk.Tk):
         self.canvas.unbind('<Button-1>')
         self.canvas.unbind('<B1-Motion>')
         self.canvas.unbind('<ButtonRelease-1>')
-        self.bind('<Button-1' , self.on_resize_opt)
+        self.bind('<Button-1>' , self.on_resize_opt)
 
     def on_mirror(self , event=None):
         if self.image:
