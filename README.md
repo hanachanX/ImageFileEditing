@@ -1,4 +1,4 @@
-# The author is A BIGINNER in programming!!!　Please be tolerant
+# The author is A BEGINNER in programming!!!Please be tolerant
 ***
 
 # Function Description #
