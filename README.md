@@ -1,12 +1,13 @@
-# The author is a beginner in programming!!!
+# The author is A BEGINNER in programming!!!Please be tolerant
 ***
 
 # Function Description #
 This app is a tool for managing files created in large quantities by StableDiffusion (AUTOMATIC1111). It also has simple image editing functions. It does not work on Mac. It extracts image generation information embedded in PNG files. It is a fast and efficient image viewer. Unwanted works can be deleted with the Delete key. You can send image files to your favorite folder using the right arrow key. You can switch images using the up and down arrow keys. The information of the source folder and destination folder, once loaded, is recorded in a file and will be automatically loaded in subsequent sessions.
 
-* Version 1.6
-    - I have created a destination window for file transfer. Now, you can send files using the "→" button. I have also implemented the functionality to open the currently displayed image file in the File Explorer. Additionally, I have enabled the main window's image to be zoomed in by 1.05 times when left-clicked. Various bugs have been fixed as well.
+Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 1.6
+I have created a destination window for file transfer. Now, you can send files using the "→" button. I have also implemented the functionality to open the currently displayed image file in the File Explorer. Additionally, I have enabled the main window's image to be zoomed in by 1.05 times when left-clicked. Various bugs have been fixed as well.
 
 * Version 1.5
     -Added support for stable diffusion(Automatic1111). Display prompt and image generation information for PNG files. Added clipboard copying functionality.
@@ -30,10 +31,10 @@ This app is a tool for managing files created in large quantities by StableDiffu
     It also has real-time monitoring of image files that are generated automatically by AI and continue to accumulate.
 
 ***
-大量の画像ファイル（JPGないしPNGのみ対応）の内容確認と削除を実行するツール。リストボックスにファイル一覧が表示されますので上下キーで画像を確認し削除したい場合はDeleteキーで
-削除が実行されます。このリストボックスはディレクトリをリアルタイムで監視しているのでAI画像自動生成などをしてファイルが追加されたらリアルタイムでリストボックスに反映されます。
-リストボックスで右クリックすれば画像の名前を編集できます。
-簡単な加工ツールがあります（ガウシアンぼかし、モザイク、拡大縮小、鉛筆画、RGB調整）
+StableDiffusion(AUTOMATIC1111)で生成された大量の画像ファイル（JPGないしPNGのみ対応）の内容確認と削除を実行を目的としたツール。
+リストボックスにファイル一覧が表示されますので上下キーで画像を確認し削除したい場合はDeleteキーで削除が実行されます。
+このリストボックスはディレクトリをリアルタイムで監視しているのでAI画像自動生成などをしてファイルが追加されたらリアルタイムでリストボックスに反映されます。
+簡単な画像加工ツールがあります
 
 * バージョン1.1　- ガンマ補正機能追加
 
@@ -48,6 +49,8 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 * バージョン1.6 - ファイルの転送先のウインドウを作成しました。→ボタンで送ることができるようになりました。
 現在表示中の画像のファイルをエクスプローラーで開くことができるようにしました。
-メインウインドウの画像を左クリックすると1.05倍づつ拡大するようにしました。その他バグを修正しました。
+プロンプト、ネガティブプロンプト情報をクリップボードに送るボタンを設置しました。
+メインウインドウの画像を左クリックすると1.05倍づつ拡大するようにしました。リストボックスと送り先フォルダ（お気に入り？傑作？）の情報は"dir_config.ini"というファイルに記録されるので
+次回の起動時にいちいちフォルダを指定する必要がありません。その他バグを修正しました。
 
 * 追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
