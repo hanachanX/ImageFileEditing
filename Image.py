@@ -492,7 +492,8 @@ class App(tk.Tk):
         self.canvas.unbind('<Button-1>')
         self.canvas.unbind('<B1-Motion>')
         self.canvas.unbind('<ButtonRelease-1>')
-        self.bind('<Button-1>' , self.on_resize_opt)
+        if self.chk_var2:
+            self.bind('<Button-1>' , self.on_resize_opt)
 
     def on_mirror(self , event=None):
         if self.image:
@@ -761,7 +762,6 @@ class App(tk.Tk):
             if self.image:
                 self.width , self.height = self.image.width() , self.image.height()
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
-                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(f'{self.width}x{self.height}')
                 logger.debug('%s , %s' ,full_path ,  os.path.splitext(full_path)[1].lower())
                 if os.path.splitext(full_path)[1].lower() == '.png':
