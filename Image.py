@@ -761,7 +761,6 @@ class App(tk.Tk):
             if self.image:
                 self.width , self.height = self.image.width() , self.image.height()
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
-                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(f'{self.width}x{self.height}')
                 logger.debug('%s , %s' ,full_path ,  os.path.splitext(full_path)[1].lower())
                 if os.path.splitext(full_path)[1].lower() == '.png':
