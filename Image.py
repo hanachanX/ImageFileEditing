@@ -492,7 +492,8 @@ class App(tk.Tk):
         self.canvas.unbind('<Button-1>')
         self.canvas.unbind('<B1-Motion>')
         self.canvas.unbind('<ButtonRelease-1>')
-        self.bind('<Button-1>' , self.on_resize_opt)
+        if self.chk_var2:
+            self.bind('<Button-1>' , self.on_resize_opt)
 
     def on_mirror(self , event=None):
         if self.image:
