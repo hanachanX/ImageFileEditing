@@ -130,13 +130,13 @@ class App(tk.Tk):
         super().__init__(**kwargs)
         # メインウインドウ設定
         self.title('IIMAGE FILE TOOL')
-        self.geometry('800x800')
+        self.geometry('512x768+100+100')
         self.resizable(False , False)
 
         # セカンドパネルの作成
         self.win = tk.Toplevel()
         self.win.title('File Info')
-        self.win.geometry('600x930')
+        self.win.geometry('600x930+612+100')
         self.win.protocol('WM_DELETE_WINDOW' , self.close_Handler)
         self.win.geometry(f'+{self.winfo_x()+800}+{self.winfo_y()+500}')
 
