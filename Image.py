@@ -1,8 +1,12 @@
+from Models import *
+import torch
+from torchvision.transforms.functional import to_tensor
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import os
 from PIL import Image , ImageTk , ImageGrab
+from PIL.Image import Resampling
 import cv2
 import numpy as np
 import io
@@ -210,6 +214,15 @@ class App(tk.Tk):
         self.editmenu.add_command(label='Undo' , command=self.undo) 
         self.menubar.add_cascade(label='Edit' , menu=self.editmenu)
 
+        # アップスケール
+        self.upscalemenu = tk.Menu(self.menubar , tearoff=False)
+        self.upscalemenu.add_command(label='CARN' , command=self.on_carn_panel)
+        self.menubar.add_cascade(label='HiRes' , menu=self.upscalemenu)
+
+        # UPScale WINDOW
+        self.carn = None
+        self.carn_var = tk.IntVar()
+
         #　設定メニュー
         self.configmenu = tk.Menu(self.menubar , tearoff=0)
         self.configmenu.add_command(label='Settings' , command=self.on_config_panel)
@@ -233,8 +246,6 @@ class App(tk.Tk):
         self.target_text1 = ''
         self.target_text2 = ''
         self.target_text3 = ''
-
-        
 
         # トリミングのためのCanvasの作成
         self.canvas = tk.Canvas(self)
@@ -362,6 +373,64 @@ class App(tk.Tk):
         self.text3.delete('1.0' , tk.END)
         self.text3.insert(tk.END , self.target_text3)
         self.text3.config(state='disabled')
+
+    def on_carn_panel(self):
+        if not self.carn or not self.carn.winfo_exists():
+            self.carn = tk.Toplevel()
+            self.carn.title('CARN Upscaler')
+            self.carn.geometry('+10+10')
+            self.carn_var.set(20)
+            self.carn_scale = ttk.Scale(self.carn , 
+                                        from_=11 , 
+                                        to=20 , 
+                                        length=200 , 
+                                        variable=self.carn_var , 
+                                        command=self.update_carn_scale)
+            self.carn_label = ttk.Label(self.carn , text='')
+            self.carn_button = ttk.Button(self.carn , text='＞' , command=self.on_exec_carn)
+            self.update_carn_scale(self.carn_var)
+            self.carn_scale.grid(row=0 , column=0 , padx=10 , pady=10)
+            self.carn_label.grid(row=0 , column=1 , padx=10 , pady=10)
+            self.carn_button.grid(row=1 , column=1 , padx=10 , pady=10 , sticky='e')
+    
+    def update_carn_scale(self , value=None):
+        value = self.carn_var.get()/10
+        self.carn_label.config(text=f'magnificant:{value:.1f}')
+
+    def on_exec_carn(self):
+        mag = self.carn_var.get()/10
+        model_cran_v2 = CARN_V2(color_channels=3, mid_channels=64, conv=nn.Conv2d,
+                        single_conv_size=3, single_conv_group=1,
+                        scale=2, activation=nn.LeakyReLU(0.1),
+                        SEBlock=True, repeat_blocks=3, atrous=(1, 1, 1))
+        model_cran_v2 = network_to_half(model_cran_v2)
+        checkpoint = r"./CARN_model.pt"
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        model_cran_v2.load_state_dict(torch.load(checkpoint , map_location=device))
+        if self.image:
+            img = ImageTk.getimage(self.image)
+            img = img.convert('RGB')
+            img_upscale = img.resize((img.size[0], img.size[1]), resample=Resampling.BICUBIC)
+            img_t = to_tensor(img_upscale).unsqueeze(0)
+            model_cran_v2.to(torch.float32)
+            with torch.no_grad():
+                out = model_cran_v2(img_t.to(device).half())
+            out = out.float()
+            out_np = out.cpu().numpy()
+            out_np = np.squeeze(out_np)
+            out_np = out_np.transpose((1,2,0))
+            out_np = cv2.resize(out_np , None , fx=mag/2.0 , fy=mag/2.0 , interpolation=cv2.INTER_LANCZOS4)
+            out_np = (out_np * 255).astype(np.uint8)
+            h , w , _ = out_np.shape
+            self.image = ImageTk.PhotoImage(Image.fromarray(out_np))
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.wm_geometry(f'{w}x{h}')
+            self.carn.destroy()
+            self.carn = None
+        else:
+            messagebox.showerror('Error' , 'Display Image')
+            self.carn.destroy()
+            self.carn = None
 
     def popup_menu(self , event):
         '''
@@ -492,8 +561,7 @@ class App(tk.Tk):
         self.canvas.unbind('<Button-1>')
         self.canvas.unbind('<B1-Motion>')
         self.canvas.unbind('<ButtonRelease-1>')
-        if self.chk_var2:
-            self.bind('<Button-1>' , self.on_resize_opt)
+        self.bind('<Button-1>' , self.on_resize_opt)
 
     def on_mirror(self , event=None):
         if self.image:
@@ -659,7 +727,6 @@ class App(tk.Tk):
             else:
                 return
 
-        
     def on_send(self , event=None):
         if self.senddir:
             selected_index = self.filelist1.curselection()
@@ -762,6 +829,7 @@ class App(tk.Tk):
             if self.image:
                 self.width , self.height = self.image.width() , self.image.height()
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(f'{self.width}x{self.height}')
                 logger.debug('%s , %s' ,full_path ,  os.path.splitext(full_path)[1].lower())
                 if os.path.splitext(full_path)[1].lower() == '.png':
