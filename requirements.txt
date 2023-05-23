@@ -1,4 +1,5 @@
 pywin32==306
 Pillow==9.5.0
 opencv-python==4.7.0.72
-numpy==1.22.3
+numpy==1.22torch==2.0.0
+torchvision==0.15.1.3
