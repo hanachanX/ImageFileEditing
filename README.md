@@ -57,8 +57,8 @@ StableDiffusion(AUTOMATIC1111)で生成された大量の画像ファイル（JP
 * バージョン1.7 - 4つあったウインドウを統合し2つにしました。ファイルの選択がずれている重大なバグを修正しました。UIを全て英語表記にしました。
 
 * 必要な追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
-
-* 実行ファイルをレポジトリに置いておきますがセキュリティの問題があるのでできればご自身でEXE化してください。
+* 実行ファイル:https://drive.google.com/file/d/1PQ4PhxMu0VRu1GH2LUvx2tiS7RqotvnA/view?usp=sharing
+* 実行ファイルをGoogle Driveに置いておきますがセキュリティの問題があるのでできればご自身でEXE化してください。
 
 ビルド
 
