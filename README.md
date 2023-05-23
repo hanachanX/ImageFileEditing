@@ -62,6 +62,7 @@ StableDiffusion(AUTOMATIC1111)で生成された大量の画像ファイル（JP
 
 ビルド
 pip install pyinstaller
+
 pyinstaller --noconsole --windowed --name Image Image.Py
 
 アプリの画面　いたってシンプルです。
