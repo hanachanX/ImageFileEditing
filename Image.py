@@ -445,7 +445,7 @@ class App(tk.Tk):
     def on_esrgan_panel(self):
         if not self.esrgan or not self.esrgan.winfo_exists():
             self.esrgan = tk.Toplevel()
-            self.esrgan.title('CARN Upscaler')
+            self.esrgan.title('R-ESRGAN Upscaler')
             self.esrgan.geometry('+10+10')
             self.esrgan_var.set(20)
             self.esrgan_scale = ttk.Scale(self.esrgan , 
