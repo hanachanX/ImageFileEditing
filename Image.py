@@ -382,7 +382,7 @@ class App(tk.Tk):
         if not self.carn or not self.carn.winfo_exists():
             self.carn = tk.Toplevel()
             self.carn.title('CARN Upscaler')
-            self.carn.geometry('+10+10')
+            self.carn.geometry(f'+{self.winfo_x()+10}+{self.winfo_y()+10}')
             self.carn_var.set(20)
             self.carn_scale = ttk.Scale(self.carn , 
                                         from_=11 , 
@@ -446,7 +446,7 @@ class App(tk.Tk):
         if not self.esrgan or not self.esrgan.winfo_exists():
             self.esrgan = tk.Toplevel()
             self.esrgan.title('R-ESRGAN Upscaler')
-            self.esrgan.geometry('+10+10')
+            self.esrgan.geometry(f'+{self.winfo_x()+10}+{self.winfo_y()+10}')
             self.esrgan_var.set(20)
             self.esrgan_scale = ttk.Scale(self.esrgan , 
                                         from_=11 , 
