@@ -1,5 +1,5 @@
 # Usage
-$Python Image.py
+Python.wxw Image.py
 
 or obtain Image.exe from the Google Drive below.
 
