@@ -236,8 +236,8 @@ class App(tk.Tk):
         # パネル2にメニュー追加
         self.filemenubar = tk.Menu(self.win)
         self.filemenu2 = tk.Menu(self.filemenubar , tearoff=False)
-        self.filemenu2.add_command(label='Read Folder1' , command=self.on_open_dir)
-        self.filemenu2.add_command(label='Read Folder2' , command=self.on_open_send_dir)
+        self.filemenu2.add_command(label='Open Folder(Left)' , command=self.on_open_dir)
+        self.filemenu2.add_command(label='Open Folder(Right)' , command=self.on_open_send_dir)
         self.filemenu2.add_command(label='Open in Explorer(Left)' , command=lambda : self.on_open_explorer(1))
         self.filemenu2.add_command(label='Open in Explorer(Right)' , command=lambda : self.on_open_explorer(2))
         self.filemenu2.add_command(label='Rename(Left)' , command= lambda : self.on_rename(1))
