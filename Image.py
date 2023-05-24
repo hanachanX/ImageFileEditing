@@ -1,6 +1,4 @@
 from Models import *
-import torch
-from torchvision.transforms.functional import to_tensor
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
@@ -19,6 +17,9 @@ import time
 import signal
 import re
 import subprocess
+import torch
+from torchvision.transforms.functional import to_tensor
+from RealESRGAN import RealESRGAN
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.WARNING , encoding='utf-8')
 logger = logging.getLogger(__name__)
@@ -217,11 +218,14 @@ class App(tk.Tk):
         # アップスケール
         self.upscalemenu = tk.Menu(self.menubar , tearoff=False)
         self.upscalemenu.add_command(label='CARN' , command=self.on_carn_panel)
-        self.menubar.add_cascade(label='HiRes' , menu=self.upscalemenu)
+        self.upscalemenu.add_command(label='R-ESRGAN' , command=self.on_esrgan_panel)
+        self.menubar.add_cascade(label='ULTRA-Resolution' , menu=self.upscalemenu)
 
         # UPScale WINDOW
         self.carn = None
+        self.esrgan = None
         self.carn_var = tk.IntVar()
+        self.esrgan_var = tk.IntVar()
 
         #　設定メニュー
         self.configmenu = tk.Menu(self.menubar , tearoff=0)
@@ -399,31 +403,37 @@ class App(tk.Tk):
 
     def on_exec_carn(self):
         mag = self.carn_var.get()/10
-        model_cran_v2 = CARN_V2(color_channels=3, mid_channels=64, conv=nn.Conv2d,
-                        single_conv_size=3, single_conv_group=1,
-                        scale=2, activation=nn.LeakyReLU(0.1),
-                        SEBlock=True, repeat_blocks=3, atrous=(1, 1, 1))
+        model_cran_v2 = CARN_V2(color_channels=3, mid_channels=64, conv=torch.nn.Conv2d,
+                                single_conv_size=3, single_conv_group=1,
+                                scale=2, activation=torch.nn.LeakyReLU(0.1),
+                                SEBlock=True, repeat_blocks=3, atrous=(1, 1, 1))
         model_cran_v2 = network_to_half(model_cran_v2)
-        checkpoint = r"./CARN_model.pt"
+        checkpoint = r'./CARN_model.pt'
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         model_cran_v2.load_state_dict(torch.load(checkpoint , map_location=device))
+        if device.type == 'cpu':
+            model_cran_v2 = model_cran_v2.float()
+        if device.type == 'cuda':
+            model_cran_v2 = model_cran_v2.to(device)
         if self.image:
             img = ImageTk.getimage(self.image)
             img = img.convert('RGB')
             img_upscale = img.resize((img.size[0], img.size[1]), resample=Resampling.BICUBIC)
             img_t = to_tensor(img_upscale).unsqueeze(0)
-            model_cran_v2.to(torch.float32)
+            if device.type == 'cuda':
+                img_t = img_t.to(device)
             with torch.no_grad():
-                out = model_cran_v2(img_t.to(device).half())
-            out = out.float()
-            out_np = out.cpu().numpy()
-            out_np = np.squeeze(out_np)
-            out_np = out_np.transpose((1,2,0))
-            out_np = cv2.resize(out_np , None , fx=mag/2.0 , fy=mag/2.0 , interpolation=cv2.INTER_LANCZOS4)
+                out = model_cran_v2(img_t.to(device).float())
+            if device.type == 'cuda':
+                out = out.cpu()
+            out_np = out.float().squeeze(0).cpu().numpy()
+            out_np = np.clip(out_np, 0, 1)
+            out_np = out_np.transpose((1, 2, 0))
+            out_np = cv2.resize(out_np, None, fx=mag/2.0, fy=mag/2.0, interpolation=cv2.INTER_LANCZOS4)
             out_np = (out_np * 255).astype(np.uint8)
-            h , w , _ = out_np.shape
+            h, w, _ = out_np.shape
             self.image = ImageTk.PhotoImage(Image.fromarray(out_np))
-            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0, 0, image=self.image, anchor=tk.NW)
             self.wm_geometry(f'{w}x{h}')
             self.carn.destroy()
             self.carn = None
@@ -431,6 +441,51 @@ class App(tk.Tk):
             messagebox.showerror('Error' , 'Display Image')
             self.carn.destroy()
             self.carn = None
+    
+    def on_esrgan_panel(self):
+        if not self.esrgan or not self.esrgan.winfo_exists():
+            self.esrgan = tk.Toplevel()
+            self.esrgan.title('CARN Upscaler')
+            self.esrgan.geometry('+10+10')
+            self.esrgan_var.set(20)
+            self.esrgan_scale = ttk.Scale(self.esrgan , 
+                                        from_=11 , 
+                                        to=20 , 
+                                        length=200 , 
+                                        variable=self.esrgan_var , 
+                                        command=self.update_esrgan_scale)
+            self.esrgan_label = ttk.Label(self.esrgan, text='')
+            self.esrgan_button = ttk.Button(self.esrgan , text='＞' , command=self.on_exec_esrgan)
+            self.update_esrgan_scale()
+            self.esrgan_scale.grid(row=0 , column=0 , padx=10 , pady=10)
+            self.esrgan_label.grid(row=0 , column=1 , padx=10 , pady=10)
+            self.esrgan_button.grid(row=1 , column=1 , padx=10 , pady=10 , sticky='e')   
+
+    def update_esrgan_scale(self , value=None):
+        value = self.esrgan_var.get()/10
+        self.esrgan_label.config(text=f'magnificant:{value:.1f}')
+
+    def on_exec_esrgan(self):
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        model_file = r'./weights/RealESRGAN_x2.pth'
+        download = True
+        if os.path.exists(model_file):
+            download = False
+        model = RealESRGAN(device , scale=2)
+        model.load_weights('weights/RealESRGAN_x2.pth', download=download)
+        if self.image:
+            img = ImageTk.getimage(self.image)
+            img = img.convert('RGB')
+            out_img = model.predict(img)
+            w , h = out_img.size
+            self.image = ImageTk.PhotoImage(out_img)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.wm_geometry(f'{w}x{h}')
+            self.esrgan.destroy()
+            self.esrgan = None
+        else:
+            messagebox.showerror('Error' , 'Display Image')
+            self.esrgan = None
 
     def popup_menu(self , event):
         '''
@@ -635,7 +690,7 @@ class App(tk.Tk):
         self.gamma = False
 
     def close_Handler(self , event=None):
-        messagebox.showinfo('Confirm', 'The close button is disabled')
+        messagebox.showinfo('Confirm', 'The close button is disabled') 
         return
 
     def signal_handler(self , signal , frame):
