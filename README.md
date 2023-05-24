@@ -1,5 +1,5 @@
 # Usage
-Python.wxw Image.py
+Python.exe Image.py
 
 or obtain Image.exe from the Google Drive below.
 
@@ -7,6 +7,11 @@ or obtain Image.exe from the Google Drive below.
 This app is a tool for managing files created in large quantities by StableDiffusion (AUTOMATIC1111). It also has simple image editing functions. It does not work on Mac. It extracts image generation information embedded in PNG files. It is a fast and efficient image viewer. Unwanted works can be deleted with the Delete key. You can send image files to your favorite folder using the right arrow key. You can switch images using the up and down arrow keys. The information of the source folder and destination folder, once loaded, is recorded in a file and will be automatically loaded in subsequent sessions.
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
+
+* Version 1.9
+I have made Real-ESRGAN available in addition to CRAN V2 for upscaling images up to twice their original resolution. Even low-resolution images can be upscaled to ultra-high resolution. Both conversion algorithms will run slowly without CUDA. Please note that the author is completely ignorant of machine learning and the code is copy-pasted. The original repository can be found here.
+
+https://github.com/ai-forever/Real-ESRGAN
 
 * Version 1.8(β Version)  
 I have added an experimental feature to upscale images using super-resolution. Please note that this process can be very slow without a GPU and there may be some noise in the output. This feature is strictly experimental. Please make sure to place Common.py, Models.py, and CARN_model.pt in the same directory as Image.py before running it. Also note that the program has not been converted to an executable file yet.    
@@ -64,7 +69,16 @@ StableDiffusion(AUTOMATIC1111)で生成された大量の画像ファイル（JP
 
 * バージョン1.7 - 4つあったウインドウを統合し2つにしました。ファイルの選択がずれている重大なバグを修正しました。UIを全て英語表記にしました。
 
-* バージョン1.8　- 実験的に超解像度にアップスケールする機能を追加しました。GPUがないとすごく時間がかかるのでお勧めしません。ノイズが混じることがありあくまでも実験的なものです。Exe化はしていません。Common.py , Models.py , CARN_model.ptをImage.pyと同一フォルダに配置して実行してください。google driveの実行ファイルはバージョン1.7のものです。
+* バージョン1.8　- 実験的に超解像度にアップスケールする機能を追加しました。GPUがないとすごく時間がかかるのでお勧めしません。ノイズが混じることがありあくまでも実験的なものです。Exe化はしていません。Common.py , Models.py , CARN_model.ptをImage.pyと同一フォルダに配置して実行してください。
+ 
+* バージョン1.9　- 超解像度二倍までのアップスケールにCRAN V2の他にReal-ESRGANを利用できるようにしました。
+低解像度の画像でも超高解像度でアップスケーリングが可能です。
+CUDAが使えないとどちらの変換アルゴリズムでも低速です。なお作者は機械学習に全く無知なためコードはコピペです。
+AUTOMATIC1111で低解像度で生成された作品もかなりきれいにアップスケーリングできます。
+フォルダ構成はリポジトリのままにしてください。
+ 
+ 
+以下のgoogle driveの実行ファイルはバージョン1.7のものです。
 
 * 必要な追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
 * 実行ファイル:https://drive.google.com/file/d/1PQ4PhxMu0VRu1GH2LUvx2tiS7RqotvnA/view?usp=sharing
