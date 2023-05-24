@@ -1,9 +1,17 @@
+# Usage
+Python.wxw Image.py
+
+or obtain Image.exe from the Google Drive below.
+
 # Function Description #
 This app is a tool for managing files created in large quantities by StableDiffusion (AUTOMATIC1111). It also has simple image editing functions. It does not work on Mac. It extracts image generation information embedded in PNG files. It is a fast and efficient image viewer. Unwanted works can be deleted with the Delete key. You can send image files to your favorite folder using the right arrow key. You can switch images using the up and down arrow keys. The information of the source folder and destination folder, once loaded, is recorded in a file and will be automatically loaded in subsequent sessions.
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
-* Version 1.7
+* Version 1.8(β Version)  
+I have added an experimental feature to upscale images using super-resolution. Please note that this process can be very slow without a GPU and there may be some noise in the output. This feature is strictly experimental. Please make sure to place Common.py, Models.py, and CARN_model.pt in the same directory as Image.py before running it. Also note that the program has not been converted to an executable file yet.    
+
+* Version 1.7(Stable Version)  
 I have merged the four windows into two. I have fixed a critical bug where file selection was incorrect. I have also updated the UI to be entirely in English.
 
 
@@ -55,6 +63,8 @@ StableDiffusion(AUTOMATIC1111)で生成された大量の画像ファイル（JP
 次回の起動時にいちいちフォルダを指定する必要がありません。その他バグを修正しました。
 
 * バージョン1.7 - 4つあったウインドウを統合し2つにしました。ファイルの選択がずれている重大なバグを修正しました。UIを全て英語表記にしました。
+
+* バージョン1.8　- 実験的に超解像度にアップスケールする機能を追加しました。GPUがないとすごく時間がかかるのでお勧めしません。ノイズが混じることがありあくまでも実験的なものです。Exe化はしていません。Common.py , Models.py , CARN_model.ptをImage.pyと同一フォルダに配置して実行してください。google driveの実行ファイルはバージョン1.7のものです。
 
 * 必要な追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
 * 実行ファイル:https://drive.google.com/file/d/1PQ4PhxMu0VRu1GH2LUvx2tiS7RqotvnA/view?usp=sharing
