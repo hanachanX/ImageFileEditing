@@ -1,7 +1,5 @@
 # Usage
-Please execute 
-
-Python Image.py
+$Python Image.py
 
 or obtain Image.exe from the Google Drive below.
 
