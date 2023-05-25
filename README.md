@@ -1,7 +1,7 @@
 # Usage
 pthonw.exe Image.pyw (No Console Window)
 
-For those using AUTOMATIC1111, please associate /venv/Scripts/pythonw.exe and Image.pyw in the stable-diffusion-webui folder as default programs and run them. Creating a shortcut for Image.pyw and placing it on the desktop will make it more convenient.
+For those using AUTOMATIC1111, please associate /stable-diffusion-webui/venv/Scripts/pythonw.exe and Image.pyw in the stable-diffusion-webui folder as default programs and run them. Creating a shortcut for Image.pyw and placing it on the desktop will make it more convenient.
 
 Python.exe Image.py
 
