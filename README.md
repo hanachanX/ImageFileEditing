@@ -1,4 +1,8 @@
 # Usage
+pthonw.exe Image.pyw (No Console Window)
+
+For those using AUTOMATIC1111, please associate /stable-diffusion-webui/venv/Scripts/pythonw.exe and Image.pyw in the stable-diffusion-webui folder as default programs and run them. Creating a shortcut for Image.pyw and placing it on the desktop will make it more convenient.
+
 Python.exe Image.py
 
 or obtain Image.exe from the Google Drive below.
@@ -84,11 +88,15 @@ AUTOMATIC1111で低解像度で生成された作品もかなりきれいにア�
 * 実行ファイル:https://drive.google.com/file/d/1PQ4PhxMu0VRu1GH2LUvx2tiS7RqotvnA/view?usp=sharing
 * 実行ファイルをGoogle Driveに置いておきますがセキュリティの問題があるのでできればご自身でEXE化してください。
 
+AUTOMATIC1111を使っている方はstable-diffusion-webuiのフォルダから/venv/Script/pythonw.exeとImage.pywを関連付けて既定のプログラムとし実行してください。
+Image.pywのショートカットを作成しデスクトップに置けばはかどります。
+
+
 ビルド
 
 pip install pyinstaller
 
-pyinstaller --noconsole --windowed --name Image Image.Py
+pyinstaller --noconsole --windowed Image.Py
 
 アプリの画面　いたってシンプルです。
 ![起動画面](image/view.png)
