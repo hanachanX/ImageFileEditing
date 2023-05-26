@@ -13,7 +13,7 @@ This app is a tool for managing files created in large quantities by StableDiffu
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
 * Version 2.0
-I have enabled the user to specify the area to apply the mosaic effect using a rectangle. Additionally, I have improved the UI and added a button to open a folder.
+I have enabled the user to specify the area to apply the mosaic effect using a rectangle. Additionally, I have improved the UI and added two buttons to open a folder.
 
 * Version 1.9
 I have made Real-ESRGAN available in addition to CRAN V2 for upscaling images up to twice their original resolution. Even low-resolution images can be upscaled to ultra-high resolution. Both conversion algorithms will run slowly without CUDA. Please note that the author is completely ignorant of machine learning and the code is copy-pasted. The original repository can be found here.
