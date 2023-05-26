@@ -327,6 +327,8 @@ class App(tk.Tk):
         self.bind('<Button-1>' , self.on_resize_opt) # リサイズ
         self.bind('<Button-3>' , self.show_menu) # 編集メニュー
         
+
+        # クリッピング、モザイク用
         self.start_x = None
         self.start_y = None
         self.end_x = None
@@ -359,8 +361,10 @@ class App(tk.Tk):
         self.config_panel = None
         self.chk_var1 = tk.BooleanVar()
         self.chk_var2 = tk.BooleanVar()
+        self.chk_var3 = tk.BooleanVar()
         self.chk_var1.set(True)
         self.chk_var2.set(True)
+        self.chk_var3.set(True)
 
         # 送り元、送り先ディレクトリ情報
         self.source_dir = ''
@@ -372,7 +376,7 @@ class App(tk.Tk):
         if os.path.isfile(dirfile_dir):
             with open(dirfile_dir , 'r' , encoding='utf-8') as f:
                 lines = f.read().splitlines()
-                if len(lines) == 2:
+                if lines[0] and lines[1]:
                     self.source_dir = self.directory = lines[0]
                     self.dest_dir = self.senddir = lines[1]
                     self.entry1.config(state='normal')
@@ -393,16 +397,18 @@ class App(tk.Tk):
         if self.source_dir:
             file_list = os.listdir(self.source_dir) 
             for filename in file_list:
-                if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
+                if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist1.insert(tk.END , filename)
 
         if self.dest_dir:
             file_list = os.listdir(self.dest_dir)
             for filename in file_list:
-                if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
+                if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist2.insert(tk.END , filename)
+
+        
 
     def set_AI_info(self , image_path):
         with open(image_path , 'rb') as f:
@@ -455,7 +461,7 @@ class App(tk.Tk):
                                         variable=self.carn_var , 
                                         command=self.update_carn_scale)
             self.carn_label = ttk.Label(self.carn , text='')
-            self.carn_button = ttk.Button(self.carn , text='＞' , command=self.on_exec_carn)
+            self.carn_button = ttk.Button(self.carn , text='EExec' , command=self.on_exec_carn)
             self.update_carn_scale(self.carn_var)
             self.carn_scale.grid(row=0 , column=0 , padx=10 , pady=10)
             self.carn_label.grid(row=0 , column=1 , padx=10 , pady=10)
@@ -514,16 +520,24 @@ class App(tk.Tk):
             self.esrgan_var.set(20)
             self.esrgan_scale = ttk.Scale(self.esrgan , 
                                         from_=11 , 
-                                        to=20 , 
+                                        to=40 , 
                                         length=200 , 
                                         variable=self.esrgan_var , 
                                         command=self.update_esrgan_scale)
             self.esrgan_label = ttk.Label(self.esrgan, text='')
-            self.esrgan_button = ttk.Button(self.esrgan , text='＞' , command=self.on_exec_esrgan)
+            self.esrgan_radio_var = tk.BooleanVar()
+            self.esrgan_radio_var.set(False)
+            self.esrgan_label2 = ttk.Label(self.esrgan , text='Which R-ESRGAN Use?')
+            self.esrgan_radio1 = ttk.Radiobutton(self.esrgan , text='x4' , variable=self.esrgan_radio_var , value=True)
+            self.esrgan_radio2 = ttk.Radiobutton(self.esrgan , text='x2' , variable=self.esrgan_radio_var , value=False)
+            self.esrgan_button = ttk.Button(self.esrgan , text='Exec' , command=self.on_exec_esrgan)
             self.update_esrgan_scale()
             self.esrgan_scale.grid(row=0 , column=0 , padx=10 , pady=10)
             self.esrgan_label.grid(row=0 , column=1 , padx=10 , pady=10)
-            self.esrgan_button.grid(row=1 , column=1 , padx=10 , pady=10 , sticky='e')   
+            self.esrgan_label2.grid(row=1 , column=0 , padx=10 , pady=10)
+            self.esrgan_button.grid(row=3 , column=1 , padx=10 , pady=10 , sticky='e')
+            self.esrgan_radio1.grid(row=2 , column=0 , padx=10 , pady=10 , sticky='w')
+            self.esrgan_radio2.grid(row=3 , column=0 , padx=10 , pady=10 , sticky='w')
 
     def update_esrgan_scale(self , value=None):
         value = self.esrgan_var.get()/10
@@ -531,20 +545,33 @@ class App(tk.Tk):
 
     def on_exec_esrgan(self):
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        model_file = r'./weights/RealESRGAN_x2.pth'
-        download = True
-        if os.path.exists(model_file):
-            download = False
-        model = RealESRGAN(device , scale=2)
-        model.load_weights('weights/RealESRGAN_x2.pth', download=download)
+        model_filex2 = r'./weights/RealESRGAN_x2.pth'
+        model_filex4 = r'./weights/RealESRGAN_x4.pth'
+        download1 = True
+        if self.esrgan_radio_var:
+            if os.path.exists(model_filex2):
+                download = False
+            model = RealESRGAN(device , scale=2)
+            model.load_weights(model_filex2, download=download1)
+        else:
+            if os.path.exists(model_filex4):
+                download = False
+            model = RealESRGAN(device , scale=4)
+            model.load_weights(model_filex4, download=download)
         if self.image:
             img = ImageTk.getimage(self.image)
             img = img.convert('RGB')
             out_img = model.predict(img)
-            w , h = out_img.size
-            self.image = ImageTk.PhotoImage(out_img)
+            mag = self.esrgan_var.get()/10
+            self.image_arr = np.array(out_img)
+            if self.esrgan_radio_var: # x2
+                self.image_arr = cv2.resize(self.image_arr , dsize=None , fx=mag/2.0 , fy=mag/2.0 , interpolation=cv2.INTER_LANCZOS4 )
+            else: # x4
+                self.image_arr = cv2.resize(self.image_arr , dsize=None , fx=mag/4.0 , fy=mag/4.0 , interpolation=cv2.INTER_LANCZOS4 )
+            w , h , _ = self.image_arr.shape
+            self.image = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
             self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
-            self.wm_geometry(f'{w}x{h}')
+            self.wm_geometry(f'{self.image.width()}x{self.image.height()}')
             self.esrgan.destroy()
             self.esrgan = None
         else:
@@ -605,7 +632,7 @@ class App(tk.Tk):
                 self.prev_dest_dir = self.dest_dir
             if self.source_dir:
                 written_data = [self.source_dir + '\n', self.dest_dir + '\n']
-                with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
+                with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f: 
                     f.writelines(written_data)
 
     def on_open_dir(self , event=None):
@@ -647,8 +674,13 @@ class App(tk.Tk):
                                           variable=self.chk_var2 , 
                                           command=self.on_change2
                                           )
+            self.check3 = ttk.Checkbutton(self.config_panel, 
+                                          text='When moving the file using the right key, display a warning.' , 
+                                          variable=self.chk_var3
+                                          )
             self.check1.pack(ipadx=10 , ipady=10)
             self.check2.pack(ipadx=10 , ipady=10)
+            self.check3.pack(ipadx=10 , ipady=10)
         else:
             self.config_panel.deiconify()
 
@@ -665,6 +697,7 @@ class App(tk.Tk):
             self.bind('<Button-1>' , self.on_resize_opt)
         else:
             self.unbind('<Button-1>')
+
 
     def on_copy_prompt(self , event=None):
         text = self.text1.get('1.0' , 'end-1c')
@@ -881,28 +914,32 @@ class App(tk.Tk):
     def on_send(self , event=None):
         if self.senddir:
             selected_index = self.filelist1.curselection()
-            if selected_index:
-                selected_index = selected_index[0]
-                target_file = self.filelist1.get(selected_index)
-                full_path = os.path.join(self.directory , target_file)
-                file_list = os.listdir(self.senddir)
-                logger.debug('%s' , file_list)
-                if target_file not in file_list:
-                    dest = os.path.join(self.senddir , target_file)
-                    os.rename(full_path , dest)
-                    self.filelist2.insert(tk.END , target_file)
-                    self.filelist1.delete(selected_index)
-                    if selected_index == self.filelist1.size():
-                        self.filelist1.selection_set(selected_index - 1)
-                        self.filelist1.activate(selected_index - 1)
+            result = True
+            if self.chk_var3:
+                result = messagebox.askyesno('confirm' , 'Do you want to transfer the file to the right listbox?')
+            if result:
+                if selected_index:
+                    selected_index = selected_index[0]
+                    target_file = self.filelist1.get(selected_index)
+                    full_path = os.path.join(self.directory , target_file)
+                    file_list = os.listdir(self.senddir)
+                    logger.debug('%s' , file_list)
+                    if target_file not in file_list:
+                        dest = os.path.join(self.senddir , target_file)
+                        os.rename(full_path , dest)
+                        self.filelist2.insert(tk.END , target_file)
+                        self.filelist1.delete(selected_index)
+                        if selected_index == self.filelist1.size():
+                            self.filelist1.selection_set(selected_index - 1)
+                            self.filelist1.activate(selected_index - 1)
+                        else:
+                            self.filelist1.selection_set(selected_index)
+                            self.filelist1.activate(selected_index)
+                            event = tk.Event()
+                            event.widget = self.filelist1
+                            self.on_draw(event=event)
                     else:
-                        self.filelist1.selection_set(selected_index)
-                        self.filelist1.activate(selected_index)
-                        event = tk.Event()
-                        event.widget = self.filelist1
-                        self.on_draw(event=event)
-                else:
-                    messagebox.showerror('Error','There is already a file with the same name at the destination')
+                        messagebox.showerror('Error','There is already a file with the same name at the destination')
         else:
             messagebox.showerror('Error' , 'Open the destination folder')
 
