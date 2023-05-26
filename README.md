@@ -3,14 +3,15 @@ pthonw.exe Image.pyw (No Console Window)
 
 For those using AUTOMATIC1111, please associate /stable-diffusion-webui/venv/Scripts/pythonw.exe and Image.pyw in the stable-diffusion-webui folder as default programs and run them. Creating a shortcut for Image.pyw and placing it on the desktop will make it more convenient.
 
-Python.exe Image.py
-
-or obtain Image.exe from the Google Drive below.
+or obtain Image.exe from the Google Drive below.(Howeve this Executable file is Version 1.7)
 
 # Function Description #
 This app is a tool for managing files created in large quantities by StableDiffusion (AUTOMATIC1111). It also has simple image editing functions. It does not work on Mac. It extracts image generation information embedded in PNG files. It is a fast and efficient image viewer. Unwanted works can be deleted with the Delete key. You can send image files to your favorite folder using the right arrow key. You can switch images using the up and down arrow keys. The information of the source folder and destination folder, once loaded, is recorded in a file and will be automatically loaded in subsequent sessions.
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
+
+* Version 2.1
+I made it possible to select R-ESRGANx2 and x4 for super resolution conversion. When you press the RIGHT KEY, a confirmation message box will appear (can be disabled from settings).
 
 * Version 2.0
 I have enabled the user to specify the area to apply the mosaic effect using a rectangle. Additionally, I have improved the UI and added two buttons to open a folder.
@@ -85,6 +86,10 @@ AUTOMATIC1111で低解像度で生成された作品もかなりきれいにア�
 フォルダ構成はリポジトリのままにしてください。
  
 * バージョン2.0　-　モザイクを掛ける範囲を矩形で指定できるようにしました。UIを改善しフォルダを開くボタンを追加しました。
+
+* バージョン2.1　RealESRGANによる超解像度変換にR-ESRGANx2とx4を選択できるようにしました。
+2倍以上に拡大する場合はx4の方がいいかもしれません。（よくわかってない）
+→ボタンを押したとき確認メッセージボックスを出すようにしました。（Setttingsから無効にできます。）
  
 以下のgoogle driveの実行ファイルはバージョン1.7のものです。
 
