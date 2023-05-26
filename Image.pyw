@@ -182,7 +182,7 @@ class App(tk.Tk):
         # セカンドパネルの作成
         self.win = tk.Toplevel()
         self.win.title('File Info')
-        self.win.geometry(f'600x970{self.winfo_x()+self.winfo_width()}+{self.winfo_y()}')
+        self.win.geometry(f'600x970+{self.winfo_x()+self.winfo_width()}+{self.winfo_y()}')
         self.win.protocol('WM_DELETE_WINDOW' , self.close_Handler)
 
         self.frame1 = ttk.Frame(self.win)
