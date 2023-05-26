@@ -130,6 +130,46 @@ class DirectoryWatcher(threading.Thread):
         self.running = False
 
 
+class PlaceHolder(tk.Entry):
+    def __init__(self, master=None, placeholder="", color='grey', **kwargs):
+        super().__init__(master, **kwargs)
+        
+        self.placeholder = placeholder
+        self.placeholder_color = color
+        self.default_fg_color = self['fg']
+        
+        self.bind('<FocusIn>', self.focus_in)
+        self.bind('<FocusOut>', self.focus_out)
+        self.bind('<Key>', self.clear_placeholder) 
+        
+        if not self.get():
+            self.insert(0, self.placeholder)
+            self.configure(fg=self.placeholder_color)
+
+
+    def put_placeholder(self):
+        self.insert(0, self.placeholder)
+        self.configure(foreground=self.placeholder_color)
+
+    def remove_placeholder(self):
+        self.delete(0, 'end')
+        self.configure(foreground=self.default_fg_color)
+
+    def focus_in(self, event):
+        if self.get() == self.placeholder:
+            self.delete('0', tk.END)
+        self.configure(fg=self.default_fg_color)
+
+    def focus_out(self, event):
+        if not self.get():
+            self.insert(0, self.placeholder)
+            self.configure(fg=self.placeholder_color)
+            
+    def clear_placeholder(self, event):  # 追加
+        if self['fg'] == self.placeholder_color:
+            self.delete('0', 'end')
+            self.configure(fg=self.default_fg_color)
+
 class App(tk.Tk):
     def __init__(self , **kwargs):
         super().__init__(**kwargs)
@@ -137,31 +177,42 @@ class App(tk.Tk):
         self.title('IIMAGE FILE TOOL')
         self.geometry('512x768+100+100')
         self.resizable(False , False)
+        self.update()
 
         # セカンドパネルの作成
         self.win = tk.Toplevel()
         self.win.title('File Info')
-        self.win.geometry('600x930+612+100')
+        self.win.geometry(f'600x970+{self.winfo_x()+self.winfo_width()}+{self.winfo_y()}')
         self.win.protocol('WM_DELETE_WINDOW' , self.close_Handler)
-        self.win.geometry(f'+{self.winfo_x()+800}+{self.winfo_y()+500}')
 
         self.frame1 = ttk.Frame(self.win)
         self.frame1.grid(row=0,column=0 , pady=10) 
+        self.entry1 = PlaceHolder(self.frame1 , placeholder='Open Source Folder' , color='Gray' , width=25 , justify='right')
+        self.entry1.config(state='disabled')
+        self.dir_button1 = ttk.Button(self.frame1 , text='Open' , command=self.on_open_dir)
+        self.entry1.grid(row=0 , column=0 , padx=5, pady=10 , sticky='w')
+        self.dir_button1.grid(row=0 , column=1 , padx=5 , pady=10 , sticky='w')
+        
         # リストボックス1の作成
 
         self.filelist1 = tk.Listbox(self.frame1 , width=40 , height=30 )
-        self.filelist1.pack(side='left' , fill='y')
+        self.filelist1.grid(row=1, column=0, columnspan=2 , padx=10, pady=10, sticky='ns')
         self.scroll1 = ttk.Scrollbar(self.frame1 , command=self.filelist1.yview)
-        self.scroll1.pack(side='left' , fill='y')
+        self.scroll1.grid(row=1, column=2, sticky='ns')
         self.filelist1.config(yscrollcommand=self.scroll1.set)
 
         self.frame2 = ttk.Frame(self.win)
         self.frame2.grid(row=0 , column=1 , pady=10)
+        self.entry2 = PlaceHolder(self.frame2 , placeholder='Open Destination Folder' , color='Gray' , width=25 , justify='right')
+        self.entry2.config(state='disabled')
+        self.dir_button2 = ttk.Button(self.frame2 , text='Open' , command=self.on_open_send_dir)
+        self.entry2.grid(row=0 , column=0 , padx=5, pady=10 , sticky='w')
+        self.dir_button2.grid(row=0 , column=1 , padx=5 , pady=10 , sticky='w')
         # リストボックス2の作成
         self.filelist2 = tk.Listbox(self.frame2 , width=40 , height=30)
-        self.filelist2.pack(side='left' , fill='y')
-        self.scroll2 = ttk.Scrollbar(self.frame2 , command=self.filelist2.yview)
-        self.scroll2.pack(side='left' , fill='y')
+        self.filelist2.grid(row=1, column=0, columnspan=2 , padx=10, pady=10, sticky='ns')
+        self.scroll2 = ttk.Scrollbar(self.frame2  , command=self.filelist2.yview)
+        self.scroll2.grid(row=1, column=2, sticky='ns')
         self.filelist2.config(yscrollcommand=self.scroll2.set)
 
         # ラベルスタイルの設定
@@ -236,8 +287,6 @@ class App(tk.Tk):
         # パネル2にメニュー追加
         self.filemenubar = tk.Menu(self.win)
         self.filemenu2 = tk.Menu(self.filemenubar , tearoff=False)
-        self.filemenu2.add_command(label='Open Folder(Left)' , command=self.on_open_dir)
-        self.filemenu2.add_command(label='Open Folder(Right)' , command=self.on_open_send_dir)
         self.filemenu2.add_command(label='Open in Explorer(Left)' , command=lambda : self.on_open_explorer(1))
         self.filemenu2.add_command(label='Open in Explorer(Right)' , command=lambda : self.on_open_explorer(2))
         self.filemenu2.add_command(label='Rename(Left)' , command= lambda : self.on_rename(1))
@@ -257,8 +306,10 @@ class App(tk.Tk):
 
         # 汎用変数
         self.image_path = ''
-        self.directory=None # Sourse Directory
-        self.senddir=None # Destination Directory
+        self.directory = None # Sourse Directory
+        self.senddir = None # Destination Directory
+        self.prev_dest_dir = None
+        self.prev_src_dir = None
  
         # ImageTk オブジェクト 
         self.image = None # PhotoImage
@@ -321,6 +372,16 @@ class App(tk.Tk):
                 if len(lines) == 2:
                     self.source_dir = self.directory = lines[0]
                     self.dest_dir = self.senddir = lines[1]
+                    self.entry1.config(state='normal')
+                    self.entry1.delete('0' , tk.END)
+                    self.entry1.insert(tk.END,self.source_dir)
+                    self.entry1.xview_moveto(1)
+                    self.entry1.config(state='disabled')
+                    self.entry2.config(state='normal')
+                    self.entry2.delete('0' , tk.END)
+                    self.entry2.insert(tk.END,self.dest_dir)
+                    self.entry2.xview_moveto(1)
+                    self.entry2.config(state='disabled')
                     self.dir_watcher(event=None)
         else:
             with open(dirfile_dir , 'w') as f:
@@ -399,7 +460,7 @@ class App(tk.Tk):
     
     def update_carn_scale(self , value=None):
         value = self.carn_var.get()/10
-        self.carn_label.config(text=f'magnificant:{value:.1f}')
+        self.carn_label.config(text=f'{value:.1f}x')
 
     def on_exec_carn(self):
         mag = self.carn_var.get()/10
@@ -463,7 +524,7 @@ class App(tk.Tk):
 
     def update_esrgan_scale(self , value=None):
         value = self.esrgan_var.get()/10
-        self.esrgan_label.config(text=f'magnificant:{value:.1f}')
+        self.esrgan_label.config(text=f'{value:.1f}x')
 
     def on_exec_esrgan(self):
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -522,17 +583,49 @@ class App(tk.Tk):
                 messagebox.showerror('Error' , 'Open Image Folder')
 
     def on_open_send_dir(self , event=None):
+        self.prev_dest_dir = self.senddir
         self.senddir = filedialog.askdirectory()
         if self.senddir:
             file_list = os.listdir(self.senddir)
             self.filelist2.delete(0 , tk.END)
             for filename in file_list:
-                if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
+                if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist2.insert(tk.END , filename)
             self.dest_dir = self.senddir
+            if not self.dest_dir or self.senddir != self.prev_dest_dir:
+                self.entry2.config(state='normal')
+                self.entry2.delete('0' , tk.END)
+                self.entry2.insert(tk.END , self.dest_dir)
+                self.entry2.xview_moveto(1) 
+                self.entry2.config(state='disabled')
+                self.prev_dest_dir = self.dest_dir
             if self.source_dir:
                 written_data = [self.source_dir + '\n', self.dest_dir + '\n']
+                with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
+                    f.writelines(written_data)
+
+    def on_open_dir(self , event=None):
+        self.prev_src_dir = self.directory 
+        self.directory = filedialog.askdirectory()
+        if self.directory:
+            self.dir_watcher(event=None)
+            self.filelist1.delete(0 , tk.END)
+            file_list = os.listdir(self.directory)
+            for filename in file_list:
+                if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
+                    continue
+                self.filelist1.insert(tk.END , filename)
+            self.source_dir=self.directory
+            if not self.source_dir or self.source_dir != self.prev_dest_dir:
+                self.entry1.config(state='normal')
+                self.entry1.delete('0' , tk.END)
+                self.entry1.insert(tk.END , self.source_dir)
+                self.entry1.xview_moveto(1)
+                self.entry1.config(state='disabled')
+                self.prev_src_dir = self.prev_src_dir
+            if self.dest_dir:
+                written_data = [self.source_dir , self.dest_dir ]
                 with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
                     f.writelines(written_data)
 
@@ -816,22 +909,6 @@ class App(tk.Tk):
         self.watcher = DirectoryWatcher(directory=self.directory , filelist=self.filelist1)
         self.watcher.daemon = True
         self.watcher.start()
-
-    def on_open_dir(self , event=None):
-        self.directory = filedialog.askdirectory()
-        if self.directory:
-            self.dir_watcher(event=None)
-            self.filelist1.delete(0 , tk.END)
-            file_list = os.listdir(self.directory)
-            for filename in file_list:
-                if os.path.splitext(filename)[1] not in ('.jpeg' , '.jpg' , '.png'):
-                    continue
-                self.filelist1.insert(tk.END , filename)
-            self.source_dir=self.directory
-            if self.dest_dir:
-                written_data = [self.source_dir , self.dest_dir ]
-                with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
-                    f.writelines(written_data)
 
     def on_rename(self , value):
         switch = True
@@ -1159,9 +1236,11 @@ class App(tk.Tk):
         global top_window
         top_window = tk.Toplevel()
         top_window.title('Resize')
+        top_window.geometry(f'+{self.winfo_x()+10}+{self.winfo_y()+10}')
         self.resize_label = ttk.Label(top_window , text='Magnification')
         self.var = tk.DoubleVar()
         self.var.set(11.0)
+        self.update_resize_scale(self.var)
         self.resize_slidar = ttk.Scale(top_window , from_=1 , to=30 , length=200 , variable=self.var , command=self.update_resize_scale)
         self.resize_button = ttk.Button(top_window , text='＞' , command=self.on_exec_resize)
         self.resize_slidar.grid(row=0 , column=0 , pady=10)
@@ -1179,7 +1258,7 @@ class App(tk.Tk):
 
     def update_resize_scale(self , value):
         var = self.var.get()/10
-        self.resize_label.config(text=f'Magnification:{var:.2f}')
+        self.resize_label.config(text=f'{var:.2f}x')
 
     def on_exec_resize(self , event=None):
         if self.image:
