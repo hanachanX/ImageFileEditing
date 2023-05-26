@@ -256,7 +256,7 @@ class App(tk.Tk):
         self.processmenu.add_command(label='Gray conv.' , command=self.on_gray_scale)
         self.processmenu.add_command(label='Sepia conv.' , command=self.on_sepia)
         self.processmenu.add_command(label='Mirror' , command=self.on_mirror)
-        self.processmenu.add_command(label='Trim' , command=self.on_trim)
+        self.processmenu.add_command(label='Crop' , command=self.on_trim)
         self.menubar.add_cascade(label='Conv' , menu=self.processmenu)
         
         # 編集メニュー
@@ -351,6 +351,9 @@ class App(tk.Tk):
 
         # ガンマ補正のサブウインドウ
         self.gamma = None
+
+        # モザイクパネル
+        self.mosaic_window = None
 
         # 設定画面
         self.config_panel = None
@@ -675,11 +678,11 @@ class App(tk.Tk):
 
     def on_trim(self , event=None):
         self.unbind('<Button-1>')
-        self.canvas.bind('<Button-1>' , self.on_trim_start)
+        self.canvas.bind('<Button-1>' , self.on_choose_start)
         self.canvas.bind('<B1-Motion>' , self.on_drag)
         self.canvas.bind('<ButtonRelease-1>' , self.on_mouse_release)
 
-    def on_trim_start(self , event=None):
+    def on_choose_start(self , event=None): 
         logger.info("始点(%s , %s)" , event.x , event.y)
         self.start_x = event.x
         self.start_y = event.y
@@ -1045,27 +1048,30 @@ class App(tk.Tk):
             messagebox.showerror('Error','Display Image')
             
     def on_mosaic(self , enent=None):
-        global top_window
-        top_window = tk.Toplevel()
-        top_window.title('Settings Mosaic')
-        self.slidar_var = tk.DoubleVar()
-        self.slidar_var.set(10.0)
-        self.frame_mosaic = tk.Frame(top_window)
-        self.frame_mosaic.pack()
-        self.mosaic_slidar_label = ttk.Label(self.frame_mosaic , text='')
-        self.mosaic_slidar = ttk.Scale(self.frame_mosaic ,
-                                        from_=1,
-                                        to=30,
-                                        length=200,
-                                        orient=tk.HORIZONTAL,
-                                        variable=self.slidar_var,
-                                        command=self.update_mosaic_slidar)
-        self.mosaic_exec_button = ttk.Button(self.frame_mosaic , text='＞',command=self.on_exec_mosaic)
-        self.undo_button = ttk.Button(self.frame_mosaic , text='Undo' , command=self.undo)
-        self.mosaic_slidar.grid(row=0 , column= 0 , pady=10)
-        self.mosaic_slidar_label.grid(row=0 , column=1 , pady=10)
-        self.mosaic_exec_button.grid(row=1 , column=1 , padx=10 , pady=10)
-        self.undo_button.grid(row=1 , column=2 , padx=10 , pady=10)
+        if self.mosaic_window is None or (not hasattr(self.mosaic_window, 'winfo_exists')) or (not self.mosaic_window.winfo_exists()):
+            self.mosaic_window = tk.Toplevel()
+            self.mosaic_window.title('Settings Mosaic')
+            self.slidar_var = tk.DoubleVar()
+            self.slidar_var.set(10.0)
+            self.frame_mosaic = tk.Frame(self.mosaic_window)
+            self.frame_mosaic.pack()
+            self.mosaic_slidar_label = ttk.Label(self.frame_mosaic , text='')
+            self.mosaic_slidar = ttk.Scale(self.frame_mosaic ,
+                                            from_=1,
+                                            to=30,
+                                            length=200,
+                                            orient=tk.HORIZONTAL,
+                                            variable=self.slidar_var,
+                                            command=self.update_mosaic_slidar)
+            self.mosaic_exec_button = ttk.Button(self.frame_mosaic , text='Exec',command=self.on_exec_mosaic)
+            self.mosaic_label = ttk.Label(self.frame_mosaic , text='Select Mosaic Area >>>>>' , foreground='blue')
+            self.parcial_mosaic_button = ttk.Button(self.frame_mosaic ,text='Choose Range' , command=self.on_exec_parcial_mosaic)
+            self.mosaic_slidar.grid(row=0 , column= 0 , pady=10)
+            self.mosaic_slidar_label.grid(row=0 , column=1 , pady=10)
+            self.mosaic_exec_button.grid(row=0 , column=2 , padx=10 , pady=10)
+            self.mosaic_label.grid(row=2 , column=0 , columnspan=2 , padx=10 , pady=10)
+            self.parcial_mosaic_button.grid(row=2 , column=2 , padx=10 , pady=10)
+            self.update_mosaic_slidar(self.slidar_var)
 
     def on_pencil(self , event=None):
         if self.image:
@@ -1092,9 +1098,9 @@ class App(tk.Tk):
     
     def update_mosaic_slidar(self , event):
         var = self.slidar_var.get()
-        self.mosaic_slidar_label.config(text=f'Strength{var:.2f}')
+        self.mosaic_slidar_label.config(text=f'Sth:{var:.2f}')
         
-    def on_exec_mosaic(self,event=None):
+    def on_exec_mosaic(self,event=None): 
         if not self.image: #PhotoImage
             self.mosaic_slidar_label.config(text='Display Image')
             return
@@ -1110,8 +1116,57 @@ class App(tk.Tk):
         image = cv2_to_pil(image)
         self.image = ImageTk.PhotoImage(image)
         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
-        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
-        top_window.destroy()
+        self.mosaic_window.destroy()
+        self.mosaic_window = None
+
+    def on_exec_parcial_mosaic(self , even=None):
+        self.unbind('<Button-1>')
+        self.canvas.bind('<Button-1>' , self.on_choose_start)
+        self.canvas.bind('<B1-Motion>' , self.on_drag)
+        self.canvas.bind('<ButtonRelease-1>' , self.on_mouse_release_for_mosaic)
+
+    def on_mouse_release_for_mosaic(self , event=None):
+        if self.image:
+            logger.info('終点(%s , %s)' , event.x , event.y)
+            self.canvas.delete('rect')
+            self.canvas.create_rectangle(self.start_x , self.start_y , event.x , event.y , outline='blue' , tags='rect')
+            self.end_x = event.x
+            self.end_y = event.y
+            result = messagebox.askyesno('Confirm' , 'Mosaic the rectangular region. Are you sure?')
+            if result:
+                self.canvas.delete('rect')
+                img = np.array(ImageTk.getimage(self.image))
+                block_size = int(self.slidar_var.get())
+                for y in range(self.start_y , self.end_y , block_size ):
+                    for x in range(self.start_x , self.end_x , block_size):
+                        roi = img[y:y+block_size , x:x+block_size ]
+                        mean_color = cv2.mean(roi)[:3]
+                        if img.shape[2] == 4:
+                            rgba_array = np.zeros((block_size , block_size ,4 ) , dtype=np.uint8)
+                            rgba_array[..., :3] = mean_color[:3]
+                            alpha_channnel_slice = img[y:y+block_size , x:x+block_size , 3:4]
+                            if len(alpha_channnel_slice) > 0:
+                                rgba_array[...,3] = alpha_channnel_slice[:,:,0]
+                            else:
+                                rgba_array[...,3] = 255
+                            img[y:y+block_size , x:x+block_size] = rgba_array
+                        else:
+                            color_array = np.ones((block_size, block_size, 3), dtype=np.uint8) * mean_color
+                            img[y:y+block_size , x:x+block_size] = color_array
+                self.image = ImageTk.PhotoImage(Image.fromarray(img))
+                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+            else:
+                self.canvas.delete('rect')
+            self.canvas.unbind('<Button-1>')
+            self.canvas.unbind('<B1-Motion>')
+            self.canvas.unbind('<ButtonRelease-1>')
+            self.bind('<Button-1>' , self.on_resize_opt)
+            self.mosaic_window.destroy()
+            self.mosaic_window = False
+        else:
+            messagebox.showerror('Error' , 'Display Image')
+            self.mosaic_window.destroy()
+            self.mosaic_window = False
 
     def popup_gaussian(self):
         global top_window
