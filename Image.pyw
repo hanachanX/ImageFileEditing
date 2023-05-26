@@ -461,7 +461,7 @@ class App(tk.Tk):
                                         variable=self.carn_var , 
                                         command=self.update_carn_scale)
             self.carn_label = ttk.Label(self.carn , text='')
-            self.carn_button = ttk.Button(self.carn , text='EExec' , command=self.on_exec_carn)
+            self.carn_button = ttk.Button(self.carn , text='Exec' , command=self.on_exec_carn)
             self.update_carn_scale(self.carn_var)
             self.carn_scale.grid(row=0 , column=0 , padx=10 , pady=10)
             self.carn_label.grid(row=0 , column=1 , padx=10 , pady=10)
