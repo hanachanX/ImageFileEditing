@@ -101,11 +101,5 @@ AUTOMATIC1111を使っている方はstable-diffusion-webuiのフォルダから
 Image.pywのショートカットを作成しデスクトップに置けばはかどります。
 
 
-ビルド
-
-pip install pyinstaller
-
-pyinstaller --noconsole --windowed Image.Py
-
 アプリの画面　いたってシンプルです。
 ![起動画面](image/view.png)
