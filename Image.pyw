@@ -376,7 +376,7 @@ class App(tk.Tk):
         if os.path.isfile(dirfile_dir):
             with open(dirfile_dir , 'r' , encoding='utf-8') as f:
                 lines = f.read().splitlines()
-                if lines[0] and lines[1]:
+                if len(lines) == 2:
                     self.source_dir = self.directory = lines[0]
                     self.dest_dir = self.senddir = lines[1]
                     self.entry1.config(state='normal')
@@ -845,6 +845,7 @@ class App(tk.Tk):
             event = tk.Event()
             event.widget = self.filelist1
             self.on_draw(event=event)
+            self.filelist1.focus_force()
         else:
             messagebox.showerror('Error', 'Failed to delete file')
 
@@ -938,6 +939,7 @@ class App(tk.Tk):
                             event = tk.Event()
                             event.widget = self.filelist1
                             self.on_draw(event=event)
+                        self.win.focus_force()
                     else:
                         messagebox.showerror('Error','There is already a file with the same name at the destination')
         else:
