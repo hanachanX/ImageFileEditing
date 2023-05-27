@@ -110,4 +110,6 @@ Image.pywのショートカットを作成しデスクトップに置けばは�
 ![起動画面](image/view.png)
 
 拡大アルゴリズム　
-![LANCZOS](image/lanczos.png) ![ESRGANx2](image/esrganx2.png)
+| LANCZOS | R-ESRGAN |
+| --- | --- |
+| ![Image 1](image/lanczos.png) | ![Image 2](esrganx2.png) |
