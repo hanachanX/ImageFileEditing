@@ -112,4 +112,4 @@ Image.pywのショートカットを作成しデスクトップに置けばは�
 拡大アルゴリズム　
 | LANCZOS | R-ESRGAN |
 | --- | --- |
-| ![Image 1](image/lanczos.png) | ![Image 2](esrganx2.png) |
+| ![Image 1](image/lanczos.png) | ![Image 2](image/esrganx2.png) |
