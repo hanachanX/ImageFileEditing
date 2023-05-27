@@ -78,7 +78,6 @@ def pencilsketch(inp_img):
     final_img = dodgeV2(img_gray, img_smoothing)
     return final_img
 
-
 def send_to_clipboard(clip_type, data):
     # クリップボードをクリアして、データをセットする
     win32clipboard.OpenClipboard()
@@ -252,6 +251,7 @@ class App(tk.Tk):
         self.processmenu.add_command(label='Pencil' , command=self.on_pencil)
         self.processmenu.add_command(label='Resize' , command=self.on_resize)
         self.processmenu.add_command(label='Color conv.' , command=self.on_change)
+        self.processmenu.add_command(label='HSV conv.' , command=self.on_hsv_panel)
         self.processmenu.add_command(label='Gamma corr.', command=self.on_gamma)
         self.processmenu.add_command(label='Gray conv.' , command=self.on_gray_scale)
         self.processmenu.add_command(label='Sepia conv.' , command=self.on_sepia)
@@ -356,6 +356,9 @@ class App(tk.Tk):
 
         # モザイクパネル
         self.mosaic_window = None
+
+        # HSV パネル
+        self.hsv = None
 
         # 設定画面
         self.config_panel = None
@@ -577,6 +580,113 @@ class App(tk.Tk):
         else:
             messagebox.showerror('Error' , 'Display Image')
             self.esrgan = None
+
+    def on_hsv_panel(self):
+        if self.image:
+            if not self.hsv or (not self.hsv.winfo_exists()):
+                self.hsv = tk.Toplevel()
+                self.hsv.title('HSV color space')
+                self.image_arr = np.array(ImageTk.getimage(self.image))
+                self.image_arr = cv2.cvtColor(self.image_arr , cv2.COLOR_RGB2HSV)
+
+
+                self.hsv_var1 = tk.IntVar()
+                self.hsv_var2 = tk.IntVar()
+                self.hsv_var3 = tk.IntVar()
+                self.hsv_var1.set(0)
+                self.hsv_var2.set(0)
+                self.hsv_var3.set(0)
+                self.hsv_frame = tk.Frame(self.hsv)
+                self.hsv_frame.pack()
+                style = ttk.Style()
+                style.configure("Custom.Horizontal.TScale", troughcolor="white", sliderlength=30, borderwidth=0)
+                self.hsv_scale1 = ttk.Scale(self.hsv_frame , 
+                                            from_ =0 , 
+                                            to=179 , 
+                                            length=200 , 
+                                            style="Custom.Horizontal.TScale",
+                                            variable=self.hsv_var1 , 
+                                            command=self.update_hsv)
+                self.hsv_scale2 = ttk.Scale(self.hsv_frame , 
+                                            from_ =0 , 
+                                            to=255 , 
+                                            length=200 , 
+                                            style="Custom.Horizontal.TScale",
+                                            variable=self.hsv_var2 , 
+                                            command=self.update_hsv)
+                self.hsv_scale3 = ttk.Scale(self.hsv_frame , 
+                                            from_ =0 , 
+                                            to=255 , 
+                                            length=200 , 
+                                            style="Custom.Horizontal.TScale",
+                                            variable=self.hsv_var3 , 
+                                            command=self.update_hsv) 
+                self.hsv_label1 = ttk.Label(self.hsv_frame , text='')
+                self.hsv_label2 = ttk.Label(self.hsv_frame , text='')
+                self.hsv_label3 = ttk.Label(self.hsv_frame , text='')
+
+                self.hsv_scale1.grid(row=0 , column=0 , padx=10 , pady=10)
+                self.hsv_scale2.grid(row=1 , column=0 , padx=10 , pady=10)
+                self.hsv_scale3.grid(row=2 , column=0 , padx=10 , pady=10)
+                self.hsv_label1.grid(row=0 , column=1 , padx=10 , pady=10)
+                self.hsv_label2.grid(row=1 , column=1 , padx=10 , pady=10)
+                self.hsv_label3.grid(row=2 , column=1 , padx=10 , pady=10)
+
+                self.hsv_scale1.bind("<MouseWheel>" , self.on_wheel_1)
+                self.hsv_scale2.bind("<MouseWheel>" , self.on_wheel_2)
+                self.hsv_scale3.bind("<MouseWheel>" , self.on_wheel_3)
+
+                self.hsv.bind('<FocusOut>' , self.focus_out)            
+                self.update_hsv(self.hsv_var1)
+                self.update_hsv(self.hsv_var2)
+                self.update_hsv(self.hsv_var3)
+                self.hsv.attributes('-topmost' , True)
+                
+        else:
+            messagebox.showerror('Error' , 'Display Image')
+            self.hsv.destroy()
+            self.hsv = None
+
+    def focus_out(self , enent=None):
+        if self.hsv:
+            self.hsv.destroy()
+            self.hsv = None
+
+    def on_wheel_1(self , event=None):
+        if event.delta > 0 and self.hsv_scale1.get() < self.hsv_scale1.cget('to'):
+            self.hsv_scale1.set(self.hsv_scale1.get() + 1)
+        elif event.delta < 0 and self.hsv_scale1.get() > self.hsv_scale1.cget('from'):
+            self.hsv_scale1.set(self.hsv_scale1.get() - 1)
+
+    def on_wheel_2(self , event=None):
+        if event.delta > 0 and self.hsv_scale2.get() < self.hsv_scale2.cget('to'):
+            self.hsv_scale2.set(self.hsv_scale2.get() + 1)
+        elif event.delta < 0 and self.hsv_scale2.get() > self.hsv_scale2.cget('from'):
+            self.hsv_scale2.set(self.hsv_scale2.get() - 1)
+
+    def on_wheel_3(self , event=None):
+        if event.delta > 0 and self.hsv_scale3.get() < self.hsv_scale3.cget('to'):
+            self.hsv_scale3.set(self.hsv_scale3.get() + 1)
+        elif event.delta < 0 and self.hsv_scale3.get() > self.hsv_scale3.cget('from'):
+            self.hsv_scale3.set(self.hsv_scale3.get() - 1)
+
+
+    def update_hsv(self , value=None):
+        h_val = self.hsv_var1.get()
+        s_val = self.hsv_var2.get()
+        v_val = self.hsv_var3.get()
+        self.hsv_label1.config(text=f'Hue:{h_val}')
+        self.hsv_label2.config(text=f'Sat.:{s_val}')
+        self.hsv_label3.config(text=f'Val.:{v_val}')
+        h , s , v = cv2.split(self.image_arr)
+        h = np.clip(h + h_val, 0, 179)
+        s = np.clip(s + s_val, 0, 255)
+        v = np.clip(v + v_val, 0, 255)
+        image_norm = cv2.merge([h , s , v])
+        rgb = cv2.cvtColor(image_norm , cv2.COLOR_HSV2RGB)
+        rgb = np.clip(rgb , 0 , 255)
+        self.image = ImageTk.PhotoImage(Image.fromarray(rgb))
+        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
 
     def popup_menu(self , event):
         '''
