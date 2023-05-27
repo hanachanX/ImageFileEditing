@@ -1009,6 +1009,8 @@ class App(tk.Tk):
                 self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(f'{self.width}x{self.height}')
                 logger.debug('%s , %s' ,full_path ,  os.path.splitext(full_path)[1].lower())
+                self.attributes("-topmost", True)
+                self.after_idle(self.attributes , '-topmost' , False)
                 if os.path.splitext(full_path)[1].lower() == '.png':
                     if check_text_chunk(full_path):
                         self.set_AI_info(full_path)
