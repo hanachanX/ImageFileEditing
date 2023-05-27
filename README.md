@@ -109,7 +109,7 @@ Image.pywのショートカットを作成しデスクトップに置けばは�
 アプリの画面　いたってシンプルです。
 ![起動画面](image/view.png)
 
-拡大アルゴリズム　
+拡大アルゴリズム　ESRGANの方が輪郭がよりシャープになります。
 | LANCZOS | R-ESRGAN |
 | --- | --- |
 | ![Image 1](image/lanczos.png) | ![Image 2](image/esrganx2.png) |
