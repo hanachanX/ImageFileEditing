@@ -108,3 +108,6 @@ Image.pywのショートカットを作成しデスクトップに置けばは�
 
 アプリの画面　いたってシンプルです。
 ![起動画面](image/view.png)
+
+拡大アルゴリズム　
+![LANCZOS](image/lanczos.png) ![ESRGANx2](image/esrganx2.png)
