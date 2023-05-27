@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 2.2
+Added HSV adjustment feature.
+
 * Version 2.1
 I made it possible to select R-ESRGANx2 and x4 for super resolution conversion. When you press the RIGHT KEY, a confirmation message box will appear (can be disabled from settings).
 
@@ -90,6 +93,8 @@ AUTOMATIC1111で低解像度で生成された作品もかなりきれいにア�
 * バージョン2.1　RealESRGANによる超解像度変換にR-ESRGANx2とx4を選択できるようにしました。
 2倍以上に拡大する場合はx4の方がいいかもしれません。（よくわかってない）
 →ボタンを押したとき確認メッセージボックスを出すようにしました。（Setttingsから無効にできます。）
+
+* バージョン2.2　HSV調節（色相、彩度、明度調節）機能を追加しました。
  
 以下のgoogle driveの実行ファイルはバージョン1.7のものです。
 
