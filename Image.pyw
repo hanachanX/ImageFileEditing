@@ -587,7 +587,7 @@ class App(tk.Tk):
                 self.hsv = tk.Toplevel()
                 self.hsv.title('HSV color space')
                 self.image_arr = np.array(ImageTk.getimage(self.image))
-                self.image_arr = cv2.cvtColor(self.image_arr , cv2.COLOR_RGB2HSV)
+                self.image_arr = cv2.cvtColor(self.image_arr , cv2.COLOR_RGB2HSV_FULL)
 
 
                 self.hsv_var1 = tk.IntVar()
@@ -683,7 +683,7 @@ class App(tk.Tk):
         s = np.clip(s + s_val, 0, 255)
         v = np.clip(v + v_val, 0, 255)
         image_norm = cv2.merge([h , s , v])
-        rgb = cv2.cvtColor(image_norm , cv2.COLOR_HSV2RGB)
+        rgb = cv2.cvtColor(image_norm , cv2.COLOR_HSV2RGB_FULL)
         rgb = np.clip(rgb , 0 , 255)
         self.image = ImageTk.PhotoImage(Image.fromarray(rgb))
         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
