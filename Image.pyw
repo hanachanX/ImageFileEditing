@@ -939,9 +939,12 @@ class App(tk.Tk):
                             event = tk.Event()
                             event.widget = self.filelist1
                             self.on_draw(event=event)
-                        self.win.focus_force()
+                        self.filelist1.focus_force()
+
                     else:
                         messagebox.showerror('Error','There is already a file with the same name at the destination')
+            else:
+                self.filelist1.focus_force()
         else:
             messagebox.showerror('Error' , 'Open the destination folder')
 
