@@ -586,6 +586,10 @@ class App(tk.Tk):
             if not self.hsv or (not self.hsv.winfo_exists()):
                 self.hsv = tk.Toplevel()
                 self.hsv.title('HSV color space')
+                self.hsv.withdraw()  # ウィンドウを一時的に非表示にする
+                self.hsv.update_idletasks()  # ウィンドウの更新を待つ
+                self.hsv.geometry('+%d+%d' % (self.winfo_rootx() + 10, self.winfo_rooty() + 10))
+                self.hsv.deiconify()  # ウィンドウを再表示する
                 self.image_arr = np.array(ImageTk.getimage(self.image))
 
                 self.hsv_var1 = tk.IntVar()
@@ -600,7 +604,7 @@ class App(tk.Tk):
                 style.configure("Custom.Horizontal.TScale", troughcolor="white", sliderlength=30, borderwidth=0)
                 self.hsv_scale1 = ttk.Scale(self.hsv_frame , 
                                             from_ = 0 , 
-                                            to=359 , 
+                                            to=360 , 
                                             length=200 , 
                                             style="Custom.Horizontal.TScale",
                                             variable=self.hsv_var1 , 
