@@ -587,8 +587,6 @@ class App(tk.Tk):
                 self.hsv = tk.Toplevel()
                 self.hsv.title('HSV color space')
                 self.image_arr = np.array(ImageTk.getimage(self.image))
-                self.image_arr = cv2.cvtColor(self.image_arr , cv2.COLOR_RGB2HSV_FULL)
-
 
                 self.hsv_var1 = tk.IntVar()
                 self.hsv_var2 = tk.IntVar()
@@ -601,21 +599,21 @@ class App(tk.Tk):
                 style = ttk.Style()
                 style.configure("Custom.Horizontal.TScale", troughcolor="white", sliderlength=30, borderwidth=0)
                 self.hsv_scale1 = ttk.Scale(self.hsv_frame , 
-                                            from_ =0 , 
-                                            to=179 , 
+                                            from_ = 0 , 
+                                            to=359 , 
                                             length=200 , 
                                             style="Custom.Horizontal.TScale",
                                             variable=self.hsv_var1 , 
                                             command=self.update_hsv)
                 self.hsv_scale2 = ttk.Scale(self.hsv_frame , 
                                             from_ =0 , 
-                                            to=255 , 
+                                            to=100 , 
                                             length=200 , 
                                             style="Custom.Horizontal.TScale",
                                             variable=self.hsv_var2 , 
                                             command=self.update_hsv)
                 self.hsv_scale3 = ttk.Scale(self.hsv_frame , 
-                                            from_ =0 , 
+                                            from_ =-255 , 
                                             to=255 , 
                                             length=200 , 
                                             style="Custom.Horizontal.TScale",
@@ -671,19 +669,31 @@ class App(tk.Tk):
             self.hsv_scale3.set(self.hsv_scale3.get() - 1)
 
 
+    def change_hsv(self, bgr_img, shift_h=0, scale_s=1.0, shift_v=0):
+        # BGR画像からHSV画像に変換
+        hsv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HSV_FULL)
+
+        # Hue成分（色相）を加算して、値域を[0, 360)に収める
+        hue_shifted = (hsv[..., 0].astype(np.int32) + shift_h) % 360
+        hsv[..., 0] = np.clip(hue_shifted, 0, 359)
+
+        # 彩度と明度を乗算・加算して、値域を[0, 255]に収める
+        hsvf = hsv.astype(np.float32)
+        hsvf[..., 1] = np.clip(hsvf[..., 1] * scale_s + shift_v, 0, 255)
+        hsvf[..., 2] = np.clip(hsvf[..., 2] + shift_v, 0, 255)
+
+        # HSV画像からBGR画像に変換
+        return cv2.cvtColor(hsvf.astype(np.uint8), cv2.COLOR_HSV2BGR_FULL)
+
     def update_hsv(self , value=None):
         h_val = self.hsv_var1.get()
-        s_val = self.hsv_var2.get()
+        # angle = int(h_val / 255) * 360
+        s_val = self.hsv_var2.get()/100
         v_val = self.hsv_var3.get()
         self.hsv_label1.config(text=f'Hue:{h_val}')
         self.hsv_label2.config(text=f'Sat.:{s_val}')
         self.hsv_label3.config(text=f'Val.:{v_val}')
-        h , s , v = cv2.split(self.image_arr)
-        h = np.clip(h + h_val, 0, 179)
-        s = np.clip(s + s_val, 0, 255)
-        v = np.clip(v + v_val, 0, 255)
-        image_norm = cv2.merge([h , s , v])
-        rgb = cv2.cvtColor(image_norm , cv2.COLOR_HSV2RGB_FULL)
+        rgb = self.change_hsv(self.image_arr , h_val , s_val , v_val)
         rgb = np.clip(rgb , 0 , 255)
         self.image = ImageTk.PhotoImage(Image.fromarray(rgb))
         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
