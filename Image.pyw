@@ -634,6 +634,8 @@ class App(tk.Tk):
                 written_data = [self.source_dir + '\n', self.dest_dir + '\n']
                 with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f: 
                     f.writelines(written_data)
+        else:
+            self.senddir = self.prev_dest_dir
 
     def on_open_dir(self , event=None):
         self.prev_src_dir = self.directory 
@@ -658,6 +660,8 @@ class App(tk.Tk):
                 written_data = [self.source_dir , self.dest_dir ]
                 with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
                     f.writelines(written_data)
+        else:
+            self.directory = self.prev_src_dir
 
     def on_config_panel(self , event=None):
         if not self.config_panel or not self.config_panel.winfo_exists():
