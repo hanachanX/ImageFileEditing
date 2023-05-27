@@ -592,7 +592,7 @@ class App(tk.Tk):
                 self.hsv_var2 = tk.IntVar()
                 self.hsv_var3 = tk.IntVar()
                 self.hsv_var1.set(0)
-                self.hsv_var2.set(0)
+                self.hsv_var2.set(100)
                 self.hsv_var3.set(0)
                 self.hsv_frame = tk.Frame(self.hsv)
                 self.hsv_frame.pack()
@@ -687,7 +687,6 @@ class App(tk.Tk):
 
     def update_hsv(self , value=None):
         h_val = self.hsv_var1.get()
-        # angle = int(h_val / 255) * 360
         s_val = self.hsv_var2.get()/100
         v_val = self.hsv_var3.get()
         self.hsv_label1.config(text=f'Hue:{h_val}')
