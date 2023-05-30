@@ -1,5 +1,5 @@
 # Usage
-pthonw.exe Image.pyw
+pythonw.exe Image.pyw
 
 For those using AUTOMATIC1111, please associate /stable-diffusion-webui/venv/Scripts/pythonw.exe and Image.pyw in the stable-diffusion-webui folder as default programs and run them. Creating a shortcut for Image.pyw and placing it on the desktop will make it more convenient.
 
@@ -109,5 +109,7 @@ Image.pywのショートカットを作成しデスクトップに置けばは�
 アプリの画面　いたってシンプルです。
 ![起動画面](image/view.png)
 
-拡大アルゴリズム　
-![LANCZOS](image/lanczos.png) ![ESRGANx2](image/esrganx2.png)
+拡大アルゴリズム　ESRGANの方が輪郭がよりシャープになります。
+| LANCZOS | R-ESRGAN |
+| --- | --- |
+| ![Image 1](image/lanczos.png) | ![Image 2](image/esrganx2.png) |
