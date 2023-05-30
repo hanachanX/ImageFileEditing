@@ -18,7 +18,9 @@ import signal
 import re
 import subprocess
 import torch
+import concurrent.futures
 from torchvision.transforms.functional import to_tensor
+
 from RealESRGAN import RealESRGAN
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.WARNING , encoding='utf-8')
@@ -107,6 +109,9 @@ def tk_to_pil(image):
     ret = tk_to_cv2(image)
     return cv2_to_pil(ret)
 
+def adjust_contrast(img, alpha=1.0, beta=0.0):
+    adjusted = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
+    return adjusted
 class DirectoryWatcher(threading.Thread):
     def __init__(self , directory , filelist):
         super().__init__()
@@ -257,6 +262,7 @@ class App(tk.Tk):
         self.processmenu.add_command(label='Sepia conv.' , command=self.on_sepia)
         self.processmenu.add_command(label='Mirror' , command=self.on_mirror)
         self.processmenu.add_command(label='Crop' , command=self.on_trim)
+        self.processmenu.add_command(label='Contrast adj.' , command=self.on_contrast_panel)
         self.menubar.add_cascade(label='Conv' , menu=self.processmenu)
         
         # 編集メニュー
@@ -359,6 +365,12 @@ class App(tk.Tk):
 
         # HSV パネル
         self.hsv = None
+        
+        # コントラストパネル
+        self.cont = None
+        
+        # 保険の変数
+        self.image_cont = None
 
         # 設定画面
         self.config_panel = None
@@ -410,8 +422,6 @@ class App(tk.Tk):
                 if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist2.insert(tk.END , filename)
-
-        
 
     def set_AI_info(self , image_path):
         with open(image_path , 'rb') as f:
@@ -580,16 +590,72 @@ class App(tk.Tk):
         else:
             messagebox.showerror('Error' , 'Display Image')
             self.esrgan = None
-
+            
+    def on_contrast_panel(self):
+        '''
+        コントラスト調整
+        '''
+        if self.image:
+            if not self.cont or ( not self.cont.winfo_exists()):
+                self.cont = tk.Toplevel()
+                self.cont.title('Contrast adjustment')
+                self.cont.withdraw()
+                self.cont.update()
+                self.cont.geometry('+%d+%d' % (self.winfo_rootx() + 10, self.winfo_rooty() + 10))
+                self.cont.deiconify()
+                
+                # ウィジェットの作成
+                self.cont_label = ttk.Label(self.cont , text='' , width=20)
+                self.cont_var = tk.IntVar()
+                self.cont_var.set(110)
+                style = ttk.Style()
+                style.configure("Custom.Horizontal.TScale", troughcolor="white", sliderlength=30, borderwidth=0)
+                self.cont_scale = ttk.Scale(self.cont,
+                                            from_=40 ,
+                                            to=160,
+                                            length=200,
+                                            style='Custom.Horizontal.TScale',
+                                            orient=tk.HORIZONTAL,
+                                            variable=self.cont_var,
+                                            command=self.on_exec_cont)
+                self.cont_scale.pack(side=tk.LEFT)
+                self.cont_label.pack(side=tk.RIGHT)
+                self.cont.bind("<MouseWheel>" , self.on_wheel_cont)
+                self.cont.bind('<FocusOut>' , self.on_focus_out_cont)
+        else:
+            messagebox.showerror('Error' , 'Display Image.')
+            
+    def on_wheel_cont(self , event=None):
+        if event.delta > 0 and self.cont_scale.get() < self.cont_scale.cget('to'):
+            self.cont_scale.set(self.cont_scale.get() + 1)
+        elif event.delta < 0 and self.cont_scale.get() > self.cont_scale.cget('from'):
+            self.cont_scale.set(self.cont_scale.get() - 1)
+            
+    def on_focus_out_cont(self , enent=None):
+        if self.cont:
+            self.cont.destroy()
+            self.cont = None
+                
+    def on_exec_cont(self , value=None):
+        
+        alpha = self.cont_var.get()/100
+        self.cont_label.config(text=f'value:{alpha:.2f}')
+        
+        self.image_arr = np.array(ImageTk.getimage(self.image))
+        self.image_arr = adjust_contrast(self.image_arr , alpha , beta=0.0)
+        
+        self.image_cont = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
+        self.canvas.create_image(0,0,image=self.image_cont , anchor=tk.NW)
+                        
     def on_hsv_panel(self):
         if self.image:
             if not self.hsv or (not self.hsv.winfo_exists()):
                 self.hsv = tk.Toplevel()
                 self.hsv.title('HSV color space')
-                self.hsv.withdraw()  # ウィンドウを一時的に非表示にする
-                self.hsv.update_idletasks()  # ウィンドウの更新を待つ
+                self.hsv.withdraw()  
+                self.hsv.update_idletasks()
                 self.hsv.geometry('+%d+%d' % (self.winfo_rootx() + 10, self.winfo_rooty() + 10))
-                self.hsv.deiconify()  # ウィンドウを再表示する
+                self.hsv.deiconify() 
                 self.image_arr = np.array(ImageTk.getimage(self.image))
 
                 self.hsv_var1 = tk.IntVar()
