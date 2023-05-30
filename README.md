@@ -1,5 +1,5 @@
 # Usage
-pthonw.exe Image.pyw
+pythonw.exe Image.pyw
 
 For those using AUTOMATIC1111, please associate /stable-diffusion-webui/venv/Scripts/pythonw.exe and Image.pyw in the stable-diffusion-webui folder as default programs and run them. Creating a shortcut for Image.pyw and placing it on the desktop will make it more convenient.
 
