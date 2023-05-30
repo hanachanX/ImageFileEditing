@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 2.3
+I added a contrast adjustment feature.
+
 * Version 2.2
 Added HSV adjustment feature.
 
@@ -95,6 +98,8 @@ AUTOMATIC1111で低解像度で生成された作品もかなりきれいにア�
 →ボタンを押したとき確認メッセージボックスを出すようにしました。（Setttingsから無効にできます。）
 
 * バージョン2.2　HSV調節（色相、彩度、明度調節）機能を追加しました。
+
+* バージョン2.3　コントラスト調節機能を追加しました。
  
 以下のgoogle driveの実行ファイルはバージョン1.7のものです。
 
