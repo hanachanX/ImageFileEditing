@@ -11,7 +11,7 @@ This app is a tool for managing files created in large quantities by StableDiffu
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
 * Version 2.5
-I Added a halftone feature. I referenced this research page. https://imageprocessing-sankarsrin.blogspot.com/2018/05/bayers-digital-halftoning-dispersed-and.html
+I added a halftone feature. I referenced this research page. https://imageprocessing-sankarsrin.blogspot.com/2018/05/bayers-digital-halftoning-dispersed-and.html
 
 * version 2.4
 I added a feature to convert to ASCII art and display it in a separate window.(It is necessary to have Courier New font installed.)
