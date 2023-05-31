@@ -11,7 +11,7 @@ This app is a tool for managing files created in large quantities by StableDiffu
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
 * version 2.4
-I added a feature to convert to ASCII art and display it in a separate window.(It is necessary to have Consolas font installed.)
+I added a feature to convert to ASCII art and display it in a separate window.(It is necessary to have Courier New font installed.)
 
 * Version 2.3
 I added a contrast adjustment feature.
@@ -104,10 +104,9 @@ AUTOMATIC1111で低解像度で生成された作品もかなりきれいにア�
 
 * バージョン2.3　- コントラスト調節機能を追加しました。
 
-* バージョン2.4 - アスキーアートに変換して別ウインドウで表示する機能を付けました。変換エンジンとカラーセットがセンスがなく仕上がりはお察しです。
-consolasフォントがインストールされていないとデフォルトのフォントが多分選択されるので画像が崩れます。
-適当な等幅フォントを選択するかconsola.ttfをインストールしてください。
-（多分Windowsには初めからconsolasはインストールされてる...と思う。）
+* バージョン2.4 - アスキーアートに変換して別ウインドウで表示する（無駄な）機能を付けました。変換エンジンとカラーセットがセンスがなく仕上がりはお察しです。
+Courier Newフォントがインストールされていないとデフォルトのフォントが多分選択されるので画像が崩れます。
+（WindowsだとCourier Newはプリインストールされてる...と思う。）
  
 以下のgoogle driveの実行ファイルはバージョン1.7のものです。
 
