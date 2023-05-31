@@ -159,7 +159,7 @@ class AAEngine():
     def drawing_AA(self):
         if self.obj:
             obj_text = self.obj.decode('utf-8')
-            self.label = ttk.Label(self.window, text=obj_text, font=('consolas' , 8), background='black', foreground='white')
+            self.label = ttk.Label(self.window, text=obj_text, font=('Courier New' , 6), background='black', foreground='white')
             self.label.pack(side=tk.LEFT)
         else:
             messagebox.showerror('Error' , 'Can not create AA Image')
