@@ -2,6 +2,7 @@ from Models import *
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+from tkinter.font import Font
 import os
 from PIL import Image , ImageTk , ImageGrab
 from PIL.Image import Resampling
@@ -112,6 +113,59 @@ def tk_to_pil(image):
 def adjust_contrast(img, alpha=1.0, beta=0.0):
     adjusted = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
     return adjusted
+
+class AAEngine():
+    def __init__(self , width , image):
+        self.window = None
+        self.user_width = width
+        self.image = image
+        self.block_size = self.image.width() // self.user_width
+        self.mapping = None
+        self.obj = None
+        
+    def create(self):
+        self.window = tk.Toplevel()
+        self.window.title('ASCII ART CANVAS')
+        self.window.resizable(False,False)
+        width = self.image.width()
+        height = self.image.height()
+        img = np.array(ImageTk.getimage(self.image))
+        color_set = 'ＭＷ８６５３＜；・．　'[::-1]
+        num_colors = len(color_set)
+        self.mapping = np.zeros((height // self.block_size+1, width // self.block_size+1), dtype=int)
+        for y in range(0, height, self.block_size):
+            for x in range(0, width, self.block_size):
+                roi = img[y:y+self.block_size, x:x+self.block_size]
+
+                # ROIの範囲が画像をはみ出す場合の処理
+                if roi.shape != (self.block_size, self.block_size):
+                    roi = img[y:min(y+self.block_size, height), x:min(x+self.block_size, width)]
+
+                mean = np.mean(roi)
+                index = int(mean / 255 * (num_colors - 1))
+                index = max(0, min(index, num_colors - 1))
+                self.mapping[y // self.block_size, x // self.block_size] = index
+                
+        with io.BytesIO() as stream:
+            for y in range(self.mapping.shape[0]):
+                for x in range(self.mapping.shape[1]):
+                    index = self.mapping[y, x]
+                    character = color_set[index]
+                    stream.write(character.encode('utf-8'))
+
+                stream.write(b"\n")
+            self.obj = stream.getvalue()
+    
+    def drawing_AA(self):
+        if self.obj:
+            obj_text = self.obj.decode('utf-8')
+            self.label = ttk.Label(self.window, text=obj_text, font=('consolas' , 8), background='black', foreground='white')
+            self.label.pack(side=tk.LEFT)
+        else:
+            messagebox.showerror('Error' , 'Can not create AA Image')
+            self.window.destroy()
+            self.window = None
+
 class DirectoryWatcher(threading.Thread):
     def __init__(self , directory , filelist):
         super().__init__()
@@ -277,12 +331,22 @@ class App(tk.Tk):
         self.upscalemenu.add_command(label='CARN' , command=self.on_carn_panel)
         self.upscalemenu.add_command(label='R-ESRGAN' , command=self.on_esrgan_panel)
         self.menubar.add_cascade(label='ULTRA-Resolution' , menu=self.upscalemenu)
+        
+        #ASCIIアート
+        self.ascmenu = tk.Menu(self.menubar , tearoff=False)
+        self.ascmenu.add_command(label='Create AA', command=self.on_aa_panel)
+        self.menubar.add_cascade(label='AA' , menu=self.ascmenu)
 
         # UPScale WINDOW
         self.carn = None
         self.esrgan = None
         self.carn_var = tk.IntVar()
         self.esrgan_var = tk.IntVar()
+        
+        # AA パネル
+        self.aa = None
+        self.aa_var = tk.IntVar()
+        self.show_aa = None
 
         #　設定メニュー
         self.configmenu = tk.Menu(self.menubar , tearoff=0)
@@ -591,10 +655,48 @@ class App(tk.Tk):
             messagebox.showerror('Error' , 'Display Image')
             self.esrgan = None
             
+    def on_aa_panel(self):
+        if self.image:
+            if not self.aa or ( not self.aa.winfo_exists()):
+                self.aa = tk.Toplevel()
+                self.aa.title('ASCII ART Config.')
+                self.aa.withdraw()
+                self.aa.update()
+                self.aa.geometry('+%d+%d' % (self.winfo_rootx() + 10, self.winfo_rooty() + 10))
+                self.aa.deiconify()
+                
+                # ウィジェットの作成と配置
+                self.entry_aa = ttk.Entry(self.aa , width=5 , justify=tk.RIGHT)
+                self.entry_aa.insert(tk.END , '80')
+                self.button_aa = ttk.Button(self.aa , text='Exec.' , command=self.on_exec_aa)
+                self.label_aa = ttk.Label(self.aa , text='Width:(40~100)')
+                self.label_aa.grid(row=0 , column=0 , padx=10 , pady=10)
+                self.entry_aa.grid(row=1 , column=0 , padx=10 , pady=10)
+                self.button_aa.grid(row=1, column=1 , padx=10 , pady=10)
+        else:
+            messagebox.showerror('Error' , 'Display Image.')
+            
+    def on_exec_aa(self):
+        try:
+            width = int(self.entry_aa.get())
+        except TypeError:
+            messagebox.showerror('Error' , 'Input Integer')
+            self.aa.destroy()
+            self.aa = None
+            return
+        else:
+            if width < 40 or width > 100:
+                messagebox.showerror('Error' , 'Please input a value between 40 and 100 for the width.')
+                self.aa.destroy()
+                self.aa = None 
+                return
+            aa = AAEngine(width , self.image)
+            aa.create()
+            aa.drawing_AA()
+            
+
+                        
     def on_contrast_panel(self):
-        '''
-        コントラスト調整
-        '''
         if self.image:
             if not self.cont or ( not self.cont.winfo_exists()):
                 self.cont = tk.Toplevel()
