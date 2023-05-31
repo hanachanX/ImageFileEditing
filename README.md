@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 2.5
+I Added a halftone feature. I referenced this research page. https://imageprocessing-sankarsrin.blogspot.com/2018/05/bayers-digital-halftoning-dispersed-and.html
+
 * version 2.4
 I added a feature to convert to ASCII art and display it in a separate window.(It is necessary to have Courier New font installed.)
 
@@ -107,6 +110,8 @@ AUTOMATIC1111で低解像度で生成された作品もかなりきれいにア�
 * バージョン2.4 - アスキーアートに変換して別ウインドウで表示する（無駄な）機能を付けました。変換エンジンとカラーセットがセンスがなく仕上がりはお察しです。
 Courier Newフォントがインストールされていないとデフォルトのフォントが多分選択されるので画像が崩れます。
 （WindowsだとCourier Newはプリインストールされてる...と思う。）
+
+* バージョン2.5 - ハーフトーン機能の追加（2種類ありますが重ね掛けはできません。Undoしてから選択しなおしてください）
  
 以下のgoogle driveの実行ファイルはバージョン1.7のものです。
 
