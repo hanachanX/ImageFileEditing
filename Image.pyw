@@ -114,6 +114,45 @@ def adjust_contrast(img, alpha=1.0, beta=0.0):
     adjusted = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
     return adjusted
 
+def bayers(im,met):
+    
+    # Bayers HalfToning Algorithm https://imageprocessing-sankarsrin.blogspot.com/2018/05/bayers-digital-halftoning-dispersed-and.html
+    
+    im = np.array(ImageTk.getimage(im)).astype(np.float32)/255
+    im = cv2.cvtColor(im , cv2.COLOR_RGB2GRAY)
+    s1, s2 = im.shape
+    
+    if met == 1:
+        # Bayers Dispersed Dot
+        DA = np.array([[0,48,12,60,3,51,15,63],
+                       [32,16,44,28,35,19,47,31],
+                       [8,56,4,52,11,59,7,55],
+                       [40,24,36,20,43,27,39,23],
+                       [2,50,14,62,1,49,13,61],
+                       [34,18,46,30,33,17,45,29],
+                       [10,58,6,54,9,57,5,53],
+                       [42,26,38,22,41,25,37,21]] , dtype=np.float32)/64.0
+
+
+    else:
+        # Bayers Clustered Dot
+        DA = np.array([[24,10,12,26,35,47,49,37],
+                       [8,0,2,14,45,59,61,51],
+                       [22,6,4,16,43,57,63,53],
+                       [30,20,18,28,33,41,55,39],
+                       [34,46,48,36,25,11,13,27],
+                       [44,58,60,50,9,1,3,15],
+                       [42,56,62,52,23,7,5,17],
+                       [32,40,54,38,31,21,19,29]] , dtype=np.float32)/64.0
+
+
+    mask = np.tile(DA,(s1//8, s2//8))
+    HOD = im < mask
+    ret = HOD.astype(np.uint8)*255
+    ret = cv2.bitwise_not(ret)
+
+    return ret
+
 class AAEngine():
     def __init__(self , width , image):
         self.window = None
@@ -311,12 +350,14 @@ class App(tk.Tk):
         self.processmenu.add_command(label='Resize' , command=self.on_resize)
         self.processmenu.add_command(label='Color conv.' , command=self.on_change)
         self.processmenu.add_command(label='HSV conv.' , command=self.on_hsv_panel)
+        self.processmenu.add_command(label='Contrast adj.' , command=self.on_contrast_panel)
         self.processmenu.add_command(label='Gamma corr.', command=self.on_gamma)
         self.processmenu.add_command(label='Gray conv.' , command=self.on_gray_scale)
         self.processmenu.add_command(label='Sepia conv.' , command=self.on_sepia)
+        self.processmenu.add_command(label='Half-Tone1' , command=lambda : self.on_half(1))
+        self.processmenu.add_command(label='Half-Tone2' , command=lambda : self.on_half(0))
         self.processmenu.add_command(label='Mirror' , command=self.on_mirror)
-        self.processmenu.add_command(label='Crop' , command=self.on_trim)
-        self.processmenu.add_command(label='Contrast adj.' , command=self.on_contrast_panel)
+        self.processmenu.add_command(label='Cropping' , command=self.on_trim)
         self.menubar.add_cascade(label='Conv' , menu=self.processmenu)
         
         # 編集メニュー
@@ -435,6 +476,7 @@ class App(tk.Tk):
         
         # 保険の変数
         self.image_cont = None
+        self.image_half = None
 
         # 設定画面
         self.config_panel = None
@@ -655,6 +697,11 @@ class App(tk.Tk):
             messagebox.showerror('Error' , 'Display Image')
             self.esrgan = None
             
+    def on_half(self , pattern):
+        self.image_arr = bayers(self.image , pattern)
+        self.image = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
+        self.canvas.create_image(0,0,image=self.image, anchor=tk.NW)
+            
     def on_aa_panel(self):
         if self.image:
             if not self.aa or ( not self.aa.winfo_exists()):
@@ -662,7 +709,7 @@ class App(tk.Tk):
                 self.aa.title('ASCII ART Config.')
                 self.aa.withdraw()
                 self.aa.update()
-                self.aa.geometry('+%d+%d' % (self.winfo_rootx() + 10, self.winfo_rooty() + 10))
+                self.aa.geometry('+%d+%d' % (self.winfo_rootx() - 40, self.winfo_rooty() - 40))
                 self.aa.deiconify()
                 
                 # ウィジェットの作成と配置
