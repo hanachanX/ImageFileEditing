@@ -114,13 +114,16 @@ def adjust_contrast(img, alpha=1.0, beta=0.0):
     adjusted = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
     return adjusted
 
-def bayers(im,met):
+def bayers(img,met):
     
     # Bayers HalfToning Algorithm https://imageprocessing-sankarsrin.blogspot.com/2018/05/bayers-digital-halftoning-dispersed-and.html
     
-    im = np.array(ImageTk.getimage(im)).astype(np.float32)/255
-    im = cv2.cvtColor(im , cv2.COLOR_RGB2GRAY)
-    s1, s2 = im.shape
+    img = np.array(ImageTk.getimage(img)).astype(np.float32)/255
+    img = cv2.cvtColor(img , cv2.COLOR_RGB2GRAY)
+    s1, s2 = img.shape
+    s1 = s1 // 8 * 8
+    s2 = s2 // 8 * 8
+    img = img[:s1 , :s2]
     
     if met == 1:
         # Bayers Dispersed Dot
@@ -147,7 +150,7 @@ def bayers(im,met):
 
 
     mask = np.tile(DA,(s1//8, s2//8))
-    HOD = im < mask
+    HOD = img < mask
     ret = HOD.astype(np.uint8)*255
     ret = cv2.bitwise_not(ret)
 
@@ -374,9 +377,7 @@ class App(tk.Tk):
         self.menubar.add_cascade(label='ULTRA-Resolution' , menu=self.upscalemenu)
         
         #ASCIIアート
-        self.ascmenu = tk.Menu(self.menubar , tearoff=False)
-        self.ascmenu.add_command(label='Create AA', command=self.on_aa_panel)
-        self.menubar.add_cascade(label='AA' , menu=self.ascmenu)
+        self.menubar.add_command(label='Create AA', command=self.on_aa_panel)
 
         # UPScale WINDOW
         self.carn = None
@@ -390,9 +391,9 @@ class App(tk.Tk):
         self.show_aa = None
 
         #　設定メニュー
-        self.configmenu = tk.Menu(self.menubar , tearoff=0)
-        self.configmenu.add_command(label='Settings' , command=self.on_config_panel)
-        self.menubar.add_cascade(label='Settings' , menu=self.configmenu)
+        # self.configmenu = tk.Menu(self.menubar , tearoff=0)
+        self.menubar.add_command(label='Settings' , command=self.on_config_panel)
+        # self.menubar.add_cascade(label='Settings' , menu=self.configmenu)
         self.config(menu=self.menubar)
 
         # パネル2にメニュー追加
@@ -515,14 +516,14 @@ class App(tk.Tk):
             with open(dirfile_dir , 'w') as f:
                 pass
 
-        if self.source_dir:
+        if self.source_dir or self.directory:
             file_list = os.listdir(self.source_dir) 
             for filename in file_list:
                 if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist1.insert(tk.END , filename)
 
-        if self.dest_dir:
+        if self.dest_dir or self.senddir:
             file_list = os.listdir(self.dest_dir)
             for filename in file_list:
                 if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
@@ -698,9 +699,12 @@ class App(tk.Tk):
             self.esrgan = None
             
     def on_half(self , pattern):
-        self.image_arr = bayers(self.image , pattern)
-        self.image = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
-        self.canvas.create_image(0,0,image=self.image, anchor=tk.NW)
+        if self.image:
+            self.image_arr = bayers(self.image , pattern)
+            self.image = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
+            self.canvas.create_image(0,0,image=self.image, anchor=tk.NW)
+        else:
+            messagebox.showerror('Error' , 'Display Image')
             
     def on_aa_panel(self):
         if self.image:
@@ -714,9 +718,9 @@ class App(tk.Tk):
                 
                 # ウィジェットの作成と配置
                 self.entry_aa = ttk.Entry(self.aa , width=5 , justify=tk.RIGHT)
-                self.entry_aa.insert(tk.END , '80')
+                self.entry_aa.insert(tk.END , '100')
                 self.button_aa = ttk.Button(self.aa , text='Exec.' , command=self.on_exec_aa)
-                self.label_aa = ttk.Label(self.aa , text='Width:(40~100)')
+                self.label_aa = ttk.Label(self.aa , text='Width:(40~140)')
                 self.label_aa.grid(row=0 , column=0 , padx=10 , pady=10)
                 self.entry_aa.grid(row=1 , column=0 , padx=10 , pady=10)
                 self.button_aa.grid(row=1, column=1 , padx=10 , pady=10)
@@ -732,7 +736,7 @@ class App(tk.Tk):
             self.aa = None
             return
         else:
-            if width < 40 or width > 100:
+            if width < 40 or width > 140:
                 messagebox.showerror('Error' , 'Please input a value between 40 and 100 for the width.')
                 self.aa.destroy()
                 self.aa = None 
@@ -740,6 +744,8 @@ class App(tk.Tk):
             aa = AAEngine(width , self.image)
             aa.create()
             aa.drawing_AA()
+            self.aa.destroy()
+            self.aa = None
             
 
                         
