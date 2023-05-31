@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* version 2.4
+I added a feature to convert to ASCII art and display it in a separate window.(It is necessary to have Consolas font installed.)
+
 * Version 2.3
 I added a contrast adjustment feature.
 
@@ -91,15 +94,20 @@ CUDAが使えないとどちらの変換アルゴリズムでも低速です。�
 AUTOMATIC1111で低解像度で生成された作品もかなりきれいにアップスケーリングできます。
 フォルダ構成はリポジトリのままにしてください。
  
-* バージョン2.0　-　モザイクを掛ける範囲を矩形で指定できるようにしました。UIを改善しフォルダを開くボタンを追加しました。
+* バージョン2.0　- モザイクを掛ける範囲を矩形で指定できるようにしました。UIを改善しフォルダを開くボタンを追加しました。
 
-* バージョン2.1　RealESRGANによる超解像度変換にR-ESRGANx2とx4を選択できるようにしました。
+* バージョン2.1　- RealESRGANによる超解像度変換にR-ESRGANx2とx4を選択できるようにしました。
 2倍以上に拡大する場合はx4の方がいいかもしれません。（よくわかってない）
 →ボタンを押したとき確認メッセージボックスを出すようにしました。（Setttingsから無効にできます。）
 
-* バージョン2.2　HSV調節（色相、彩度、明度調節）機能を追加しました。
+* バージョン2.2　- HSV調節（色相、彩度、明度調節）機能を追加しました。
 
-* バージョン2.3　コントラスト調節機能を追加しました。
+* バージョン2.3　- コントラスト調節機能を追加しました。
+
+* バージョン2.4 - アスキーアートに変換して別ウインドウで表示する機能を付けました。変換エンジンとカラーセットがセンスがなく仕上がりはお察しです。
+consolasフォントがインストールされていないとデフォルトのフォントが多分選択されるので画像が崩れます。
+適当な等幅フォントを選択するかconsola.ttfをインストールしてください。
+（多分Windowsには初めからconsolasはインストールされてる...と思う。）
  
 以下のgoogle driveの実行ファイルはバージョン1.7のものです。
 
