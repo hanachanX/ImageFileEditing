@@ -378,6 +378,13 @@ class App(tk.Tk):
         
         #ASCIIアート
         self.menubar.add_command(label='Create AA', command=self.on_aa_panel)
+        
+        # ステータスバー
+        self.frame_status = tk.Frame(self, bd=1, relief=tk.SUNKEN)
+        self.frame_status.pack(side=tk.BOTTOM , fill=tk.X)
+        self.status_bar = tk.Label(self.frame_status , text='' , justify=tk.RIGHT, anchor=tk.E)
+        self.status_bar.pack(fill=tk.X , padx=10)
+
 
         # UPScale WINDOW
         self.carn = None
@@ -414,7 +421,7 @@ class App(tk.Tk):
 
         # トリミングのためのCanvasの作成
         self.canvas = tk.Canvas(self)
-        self.canvas.pack(fill=tk.BOTH , expand=True)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # 汎用変数
         self.image_path = ''
@@ -529,6 +536,11 @@ class App(tk.Tk):
                 if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist2.insert(tk.END , filename)
+                
+    def update_status(self):
+        self.width = self.image.width()
+        self.height = self.image.height()
+        self.status_bar.config(text=f'({self.width}x{self.height})')
 
     def set_AI_info(self , image_path):
         with open(image_path , 'rb') as f:
@@ -625,6 +637,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(Image.fromarray(out_np))
             self.canvas.create_image(0, 0, image=self.image, anchor=tk.NW)
             self.wm_geometry(f'{w}x{h}')
+            self.update_status()
             self.carn.destroy()
             self.carn = None
         else:
@@ -692,6 +705,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
             self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
             self.wm_geometry(f'{self.image.width()}x{self.image.height()}')
+            self.update_status()
             self.esrgan.destroy()
             self.esrgan = None
         else:
@@ -747,8 +761,6 @@ class App(tk.Tk):
             self.aa.destroy()
             self.aa = None
             
-
-                        
     def on_contrast_panel(self):
         if self.image:
             if not self.cont or ( not self.cont.winfo_exists()):
@@ -1357,6 +1369,7 @@ class App(tk.Tk):
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
                 self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(f'{self.width}x{self.height}')
+                self.update_status()
                 logger.debug('%s , %s' ,full_path ,  os.path.splitext(full_path)[1].lower())
                 self.attributes("-topmost", True)
                 self.after_idle(self.attributes , '-topmost' , False)
@@ -1421,6 +1434,7 @@ class App(tk.Tk):
                 self.text3.config(state='disabled')
             self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
             self.wm_geometry(f'{self.width}x{self.height}')
+            self.update_status()
 
     def on_save_file(self , event=None):
         self.image_path = filedialog.asksaveasfilename(defaultextension='.jpg')
@@ -1488,6 +1502,7 @@ class App(tk.Tk):
         self.image = ImageTk.PhotoImage(image) 
         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
         self.wm_geometry(str(w)+'x'+str(h))
+        self.update_status()
     
     def update_mosaic_slidar(self , event):
         var = self.slidar_var.get()
@@ -1645,6 +1660,7 @@ class App(tk.Tk):
                 self.original = self.image
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
                 self.wm_geometry(str(self.width)+'x'+str(self.height))
+                self.update_status()
         elif isinstance(self.image , bytes):
             data = self.image[2:]
             rgb_image = Image.frombytes(
@@ -1656,6 +1672,7 @@ class App(tk.Tk):
                 self.original = self.image
                 self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
+                self.update_status()
         elif isinstance(self.image , list):
             img = Image.open(self.image[0])
             self.width , self.height = img.size
@@ -1664,6 +1681,7 @@ class App(tk.Tk):
                 self.original = self.image
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
+                self.update_status()
         else:
             messagebox.showerror('Error','Display Image')
 
@@ -1694,6 +1712,7 @@ class App(tk.Tk):
         self.resize_slidar.grid(row=0 , column=0 , pady=10)
         self.resize_label.grid(row=0 , column=1 , padx=10 ,  pady=10)
         self.resize_button.grid(row=1, column=1 , padx=10 , pady=10)
+        self.update_status()
 
     def on_resize_opt(self , event=None):
         if self.image:
@@ -1703,6 +1722,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_img))
             self.canvas.create_image(0, 0 , image=self.image , anchor=tk.NW)
             self.wm_geometry(f'{w}x{h}')
+            self.update_status()
 
     def update_resize_scale(self , value):
         var = self.var.get()/10
@@ -1717,7 +1737,8 @@ class App(tk.Tk):
             height , width , _ = arr_img.shape
             self.image = ImageTk.PhotoImage(Image.fromarray(arr_img))
             self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
-            self.wm_geometry(str(width) +'x' + str(height))
+            self.wm_geometry(f'{width}x{height}')
+            self.update_status
             top_window.destroy()
         else:
             messagebox.showerror('Error','Display Image')
