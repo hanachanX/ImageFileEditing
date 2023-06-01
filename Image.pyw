@@ -981,6 +981,7 @@ class App(tk.Tk):
         else:
             self.senddir = self.prev_dest_dir
 
+
     def on_open_dir(self , event=None):
         self.prev_src_dir = self.directory 
         self.directory = filedialog.askdirectory()
@@ -993,15 +994,15 @@ class App(tk.Tk):
                     continue
                 self.filelist1.insert(tk.END , filename)
             self.source_dir=self.directory
-            if not self.source_dir or self.source_dir != self.prev_dest_dir:
+            if self.source_dir != self.prev_src_dir:
                 self.entry1.config(state='normal')
                 self.entry1.delete('0' , tk.END)
                 self.entry1.insert(tk.END , self.source_dir)
                 self.entry1.xview_moveto(1)
                 self.entry1.config(state='disabled')
-                self.prev_src_dir = self.prev_src_dir
+                self.prev_src_dir = self.source_dir
             if self.dest_dir:
-                written_data = [self.source_dir , self.dest_dir ]
+                written_data = [self.source_dir + '\n', self.dest_dir + '\n' ]
                 with open(r'./dir_config.ini' , 'w' , encoding='utf-8') as f:
                     f.writelines(written_data)
         else:
@@ -1726,15 +1727,19 @@ class App(tk.Tk):
         self.popup = tk.Toplevel()
         self.popup.title('Change Channel Value')
         self.popup.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()-20}')
-        self.label1 = ttk.Label(self.popup,text='Blue')
-        self.label2 = ttk.Label(self.popup,text='Green')
-        self.label3 = ttk.Label(self.popup,text='Red')
+        self.label1 = ttk.Label(self.popup,text='')
+        self.label2 = ttk.Label(self.popup,text='')
+        self.label3 = ttk.Label(self.popup,text='')
         self.var_B = tk.DoubleVar()
         self.var_G = tk.DoubleVar()
         self.var_R = tk.DoubleVar()
         self.var_B.set(10.0)
         self.var_G.set(10.0)
         self.var_R.set(10.0)
+        self.update_blue(10)
+        self.update_green(10)
+        self.update_red(10)
+        
         self.blue_scale = ttk.Scale(self.popup ,
                                     from_=0 ,
                                     to=30 , 
