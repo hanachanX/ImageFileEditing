@@ -1749,7 +1749,7 @@ class App(tk.Tk):
         self.popup = tk.Toplevel()
         self.popup.title('Change Channel Value')
         self.popup.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()-20}')
-        self.popup.protocol('AM_DELETE_WINDOW' , self.on_change_image)
+        self.popup.protocol('WM_DELETE_WINDOW' , self.on_change_image)
         self.label1_rgb = ttk.Label(self.popup,text='B', width= 15)
         self.label2_rgb = ttk.Label(self.popup,text='G', width= 15)
         self.label3_rgb = ttk.Label(self.popup,text='R', width= 15)
@@ -1799,7 +1799,7 @@ class App(tk.Tk):
         
     def on_change_image(self):
         self.image = self.image_tmp
-        self.popup.destoroy()
+        self.popup.destroy()
         self.popup = None
         
     def on_wheel_B(self , event=None):
