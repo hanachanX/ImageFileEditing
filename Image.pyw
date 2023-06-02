@@ -485,6 +485,7 @@ class App(tk.Tk):
         # 保険の変数
         self.image_cont = None
         self.image_half = None
+        self.image_tmp = None
 
         # 設定画面
         self.config_panel = None
@@ -1748,18 +1749,17 @@ class App(tk.Tk):
         self.popup = tk.Toplevel()
         self.popup.title('Change Channel Value')
         self.popup.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()-20}')
-        self.label1 = ttk.Label(self.popup,text='')
-        self.label2 = ttk.Label(self.popup,text='')
-        self.label3 = ttk.Label(self.popup,text='')
+        self.popup.protocol('AM_DELETE_WINDOW' , self.on_change_image)
+        self.label1_rgb = ttk.Label(self.popup,text='B', width= 15)
+        self.label2_rgb = ttk.Label(self.popup,text='G', width= 15)
+        self.label3_rgb = ttk.Label(self.popup,text='R', width= 15)
         self.var_B = tk.DoubleVar()
         self.var_G = tk.DoubleVar()
         self.var_R = tk.DoubleVar()
         self.var_B.set(10.0)
         self.var_G.set(10.0)
         self.var_R.set(10.0)
-        self.update_blue(10)
-        self.update_green(10)
-        self.update_red(10)
+
         
         self.blue_scale = ttk.Scale(self.popup ,
                                     from_=0 ,
@@ -1767,68 +1767,121 @@ class App(tk.Tk):
                                     length=200 , 
                                     orient=tk.HORIZONTAL,
                                     variable=self.var_B,
-                                    command=self.update_blue)
+                                    command=self.update_rgb)
         self.green_scale = ttk.Scale(self.popup ,
                                     from_=0 ,
                                     to=30 , 
                                     length=200 , 
                                     orient=tk.HORIZONTAL,
                                     variable=self.var_G,
-                                    command=self.update_green)
+                                    command=self.update_rgb)
         self.red_scale = ttk.Scale(self.popup ,
                                     from_=0 ,
                                     to=30 , 
                                     length=200 , 
                                     orient=tk.HORIZONTAL,
                                     variable=self.var_R,
-                                    command=self.update_red)
-        self.convert_button = ttk.Button(self.popup , text='＞' , command=self.on_exec_change)
+                                    command=self.update_rgb)
+        # self.convert_button = ttk.Button(self.popup , text='＞' , command=self.on_exec_change)
         self.blue_scale.grid(row=0 , column=0 , pady=10)
         self.green_scale.grid(row=1 , column=0 , pady=10)
         self.red_scale.grid(row=2 , column=0 , pady=10)
-        self.label1.grid(row=0 , column=1 , padx=10 , pady=10)
-        self.label2.grid(row=1 , column=1 , padx=10 , pady=10)
-        self.label3.grid(row=2 , column=1 , padx=10 , pady=10)
-        self.convert_button.grid(row=3 , column=1 , padx=10 , pady=10)
+        self.label1_rgb.grid(row=0 , column=1 , padx=10 , pady=10)
+        self.label2_rgb.grid(row=1 , column=1 , padx=10 , pady=10)
+        self.label3_rgb.grid(row=2 , column=1 , padx=10 , pady=10)
+        # self.convert_button.grid(row=3 , column=1 , padx=10 , pady=10)
+        self.blue_scale.bind("<MouseWheel>" , self.on_wheel_B)
+        self.green_scale.bind("<MouseWheel>" , self.on_wheel_G)
+        self.red_scale.bind("<MouseWheel>" , self.on_wheel_R)
+        self.update_rgb(None)
+        self.update_rgb(None)
+        self.update_rgb(None)
         
-    def update_blue(self , value):
-        val = self.var_B.get()/10
-        self.label1.config(text=f'B:{val:.1f}')
+    def on_change_image(self):
+        self.image = self.image_tmp
+        self.popup.destoroy()
+        self.popup = None
         
-    def update_green(self , value):
-        val = self.var_G.get()/10
-        self.label2.config(text=f'G:{val:.1f}')
+    def on_wheel_B(self , event=None):
+        if event.delta > 0 and self.blue_scale.get() < self.blue_scale.cget('to'):
+            self.blue_scale.set(self.blue_scale.get() + 1)
+        elif event.delta < 0 and self.blue_scale.get() > self.blue_scale.cget('from'):
+            self.blue_scale.set(self.blue_scale.get() - 1)
+            
+    def on_wheel_G(self , event=None):
+        if event.delta > 0 and self.green_scale.get() < self.green_scale.cget('to'):
+            self.green_scale.set(self.green_scale.get() + 1)
+        elif event.delta < 0 and self.green_scale.get() > self.green_scale.cget('from'):
+            self.green_scale.set(self.green_scale.get() - 1)
+            
+    def on_wheel_R(self , event=None):
+        if event.delta > 0 and self.red_scale.get() < self.red_scale.cget('to'):
+            self.red_scale.set(self.red_scale.get() + 1)
+        elif event.delta < 0 and self.red_scale.get() > self.red_scale.cget('from'):
+            self.red_scale.set(self.red_scale.get() - 1)
         
-    def update_red(self , value):
-        val = self.var_R.get()/10
-        self.label3.config(text=f'R:{val:.1f}')
-    
-    def on_exec_change(self , event=None):
+        
+    def update_rgb(self , value=None):
         if self.image:
-            B = self.var_B.get()/10
-            G = self.var_G.get()/10
-            R = self.var_R.get()/10
-            arr_image = np.array(ImageTk.getimage(self.image)).astype(np.float32)
-            arr_image = cv2.cvtColor(arr_image , cv2.COLOR_RGB2BGR)
-            arr_image /= 255.0
-            blue_array = arr_image[:,:,0]
-            green_array = arr_image[:,:,1]
-            red_array = arr_image[:,:,2]
-            blue_array *= B
-            green_array *= G
-            red_array *= R
-            img = arr_image.copy()
-            img[:,:,0] = blue_array
-            img[:,:,1] = green_array
-            img[:,:,2] = red_array
-            img = np.clip(img ,0 , 1.0)
-            arr_uint8 = (img*255).astype(np.uint8)
-            arr_uint8 = cv2.cvtColor(arr_uint8 , cv2.COLOR_BGR2RGB)
-            self.image = ImageTk.PhotoImage(Image.fromarray(arr_uint8))
-            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
-            self.popup.destroy()
+            if self.label1_rgb.winfo_exists():
+                val1 = self.var_B.get()/10
+                val2 = self.var_G.get()/10
+                val3 = self.var_R.get()/10
+                self.label1_rgb.config(text=f'B:{val1:.1f}')
+                self.label2_rgb.config(text=f'G:{val2:.1f}')
+                self.label3_rgb.config(text=f'R:{val3:.1f}')
+                self.image_arr = np.array(ImageTk.getimage(self.image)).astype(np.float32)/255.0
+                blue = self.image_arr[:,:,2]
+                green = self.image_arr[:,:,1]
+                red = self.image_arr[:,:,0]
+                blue *= val1
+                green *= val2
+                red *= val3
+                self.image_arr= cv2.merge((red,green,blue))
+                self.image_arr = np.clip(self.image_arr , 0  , 1)
+                arr_uint8 = (self.image_arr*255).astype(np.uint8)
+                self.image_tmp = ImageTk.PhotoImage(Image.fromarray(arr_uint8))
+                self.canvas.create_image(0,0,image=self.image_tmp,anchor=tk.NW)
         else:
-            messagebox.showerror('Error','Display Image')
+            messagebox.showerror('Error' , 'Display Image!!!')
+            self.popup.destroy()
+            self.popup = None
+            
+        
+    # def update_green(self , value):
+    #     val = self.var_G.get()/10
+    #     self.label2.config(text=f'G:{val:.1f}')
+        
+    # def update_red(self , value):
+    #     val = self.var_R.get()/10
+    #     self.label3.config(text=f'R:{val:.1f}')
+    
+    # def on_exec_change(self , event=None):
+    #     if self.image:
+    #         B = self.var_B.get()/10
+    #         G = self.var_G.get()/10
+    #         R = self.var_R.get()/10
+    #         arr_image = np.array(ImageTk.getimage(self.image)).astype(np.float32)
+    #         arr_image = cv2.cvtColor(arr_image , cv2.COLOR_RGB2BGR)
+    #         arr_image /= 255.0
+    #         blue_array = arr_image[:,:,0]
+    #         green_array = arr_image[:,:,1]
+    #         red_array = arr_image[:,:,2]
+    #         blue_array *= B
+    #         green_array *= G
+    #         red_array *= R
+    #         img = arr_image.copy()
+    #         img[:,:,0] = blue_array
+    #         img[:,:,1] = green_array
+    #         img[:,:,2] = red_array
+    #         img = np.clip(img ,0 , 1.0)
+    #         arr_uint8 = (img*255).astype(np.uint8)
+    #         arr_uint8 = cv2.cvtColor(arr_uint8 , cv2.COLOR_BGR2RGB)
+    #         self.image = ImageTk.PhotoImage(Image.fromarray(arr_uint8))
+    #         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+    #         self.popup.destroy()
+    #     else:
+    #         messagebox.showerror('Error','Display Image')
             
     def quit(self):
         self.destroy()
