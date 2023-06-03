@@ -172,7 +172,7 @@ class AAEngine():
         width = self.image.width()
         height = self.image.height()
         img = np.array(ImageTk.getimage(self.image))
-        color_set = 'ＭＷ８６５３＜；・．　'[::-1]
+        color_set = 'ＭＷＮ＄＠％＃＆Ｂ８９ＥＧＡ６ｍＫ５ＨＲｋｂＹＴ４３Ｖ０ＪＬ７ｇｐａｓｅｙｘｚｎｏｃｖ？ｊＩｆｔｒ１ｌｉ＊＝－～＾｀’：；，．　'[::-1]
         num_colors = len(color_set)
         self.mapping = np.zeros((height // self.block_size+1, width // self.block_size+1), dtype=int)
         for y in range(0, height, self.block_size):
@@ -284,6 +284,7 @@ class App(tk.Tk):
         self.win.title('File Info')
         self.win.geometry(f'600x970+{self.winfo_x()+self.winfo_width()}+{self.winfo_y()}')
         self.win.protocol('WM_DELETE_WINDOW' , self.close_Handler)
+        self.win.resizable(False , False)
 
         self.frame1 = ttk.Frame(self.win)
         self.frame1.grid(row=0,column=0 , pady=10) 
