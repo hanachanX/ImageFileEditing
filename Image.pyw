@@ -741,7 +741,7 @@ class App(tk.Tk):
                 self.entry_aa = ttk.Entry(self.aa , width=5 , justify=tk.RIGHT)
                 self.entry_aa.insert(tk.END , '140')
                 self.button_aa = ttk.Button(self.aa , text='Exec.' , command=self.on_exec_aa)
-                self.label_aa = ttk.Label(self.aa , text='Width:(40~2200)')
+                self.label_aa = ttk.Label(self.aa , text='Width:(40~200)')
                 self.label_aa.grid(row=0 , column=0 , padx=10 , pady=10)
                 self.entry_aa.grid(row=1 , column=0 , padx=10 , pady=10)
                 self.button_aa.grid(row=1, column=1 , padx=10 , pady=10)
@@ -758,7 +758,7 @@ class App(tk.Tk):
             return
         else:
             if width < 40 or width > 200:
-                messagebox.showerror('Error' , 'Please input a value between 40 and 2200 for the width.')
+                messagebox.showerror('Error' , 'Please input a value between 40 and 200 for the width.')
                 self.aa.destroy()
                 self.aa = None 
                 return
