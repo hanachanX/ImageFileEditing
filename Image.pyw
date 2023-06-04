@@ -172,7 +172,11 @@ class AAEngine():
         width = self.image.width()
         height = self.image.height()
         img = np.array(ImageTk.getimage(self.image))
+        # color_set = 'ＭＷ８６５３＜；・．　'[::-1]
         color_set = 'ＭＷＮ＄＠％＃＆Ｂ８９ＥＧＡ６ｍＫ５ＨＲｋｂＹＴ４３Ｖ０ＪＬ７ｇｐａｓｅｙｘｚｎｏｃｖ？ｊＩｆｔｒ１ｌｉ＊＝－～＾｀’：；，．　'[::-1]
+        # color_set = '＠Ｗ％ＱＭＢ＆ＮｍＤＲＧＯ８ｇＨＥｗＳＫＡ＄６９０ｄｂＺｑＵｐ５ＰＸ＃ａＣｈ４Ｖ２３ｅｋＦｏｕｎｙＴＹｓｚｘ７１＊ＬＪＩｆｊｔｖｃ＜［］｛＞｝＝？＋／（＼）ｒｌ～！ｉ｜＂＿；－：，＾＇｀．　'[::-1]
+        # color_set = 'Ｂ＃ＥＲ＝ＤＭＷ％Ｚ＄ＰＧＱ＆２５ＨＦ＠Ｓ８Ｎ４Ｏ＋Ｋ９６ｍｚＣｇＡ０ｅｗ３ＴｄｂＵＬＸｐｑ［］Ｖ７ｈｋ－ａｔ＜＞＊ｆｏｓｙ？ＩＹｕＪｎ｝｛ｃｘ～ｊｖ｜１／＼ｒｌ！）（ｉ＿＾：；＂｀＇．，　'[::-1]
+        # color_set = 'ＢＥ＝Ｍ％＄Ｇ＆５ＦＳＮＯＫ６ｚｇ０ｗＴｂＬｐ［Ｖｈ－ｔ＞ｆｓ？ＹＪ｝ｃ～ｖ１＼ｌ）ｉ＾；｀．　'[::-1]
         num_colors = len(color_set)
         self.mapping = np.zeros((height // self.block_size+1, width // self.block_size+1), dtype=int)
         for y in range(0, height, self.block_size):
@@ -201,7 +205,8 @@ class AAEngine():
     def drawing_AA(self):
         if self.obj:
             obj_text = self.obj.decode('utf-8')
-            self.label = ttk.Label(self.window, text=obj_text, font=('Courier New' , 6), background='black', foreground='white')
+            self.label = ttk.Label(self.window, text=obj_text, font=('Courier New' , 4), background='black', foreground='white')
+            # self.label = ttk.Label(self.window, text=obj_text, font=('Ms gothic' , 6), background='black', foreground='white')
             self.label.pack(side=tk.LEFT)
         else:
             messagebox.showerror('Error' , 'Can not create AA Image')
@@ -734,9 +739,9 @@ class App(tk.Tk):
                 
                 # ウィジェットの作成と配置
                 self.entry_aa = ttk.Entry(self.aa , width=5 , justify=tk.RIGHT)
-                self.entry_aa.insert(tk.END , '100')
+                self.entry_aa.insert(tk.END , '140')
                 self.button_aa = ttk.Button(self.aa , text='Exec.' , command=self.on_exec_aa)
-                self.label_aa = ttk.Label(self.aa , text='Width:(40~140)')
+                self.label_aa = ttk.Label(self.aa , text='Width:(40~2200)')
                 self.label_aa.grid(row=0 , column=0 , padx=10 , pady=10)
                 self.entry_aa.grid(row=1 , column=0 , padx=10 , pady=10)
                 self.button_aa.grid(row=1, column=1 , padx=10 , pady=10)
@@ -752,8 +757,8 @@ class App(tk.Tk):
             self.aa = None
             return
         else:
-            if width < 40 or width > 140:
-                messagebox.showerror('Error' , 'Please input a value between 40 and 100 for the width.')
+            if width < 40 or width > 200:
+                messagebox.showerror('Error' , 'Please input a value between 40 and 2200 for the width.')
                 self.aa.destroy()
                 self.aa = None 
                 return
