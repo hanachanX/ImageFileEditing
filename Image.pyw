@@ -579,6 +579,7 @@ class App(tk.Tk):
             self.ppt.update()
             self.ppt.geometry('+%d+%d' % (self.winfo_rootx() + 40, self.winfo_rooty() + 40))
             self.ppt.deiconify()
+            self.ppt.protocol('WM_DELETE_WINDOW' , self.on_ppt_destroy)
             self.ppt_list = tk.Listbox(self.ppt , width=60 , height=30)
             self.ppt_scroll = ttk.Scrollbar(self.ppt  , command=self.ppt_list.yview)
             self.ppt_scroll.grid(row=0, column=4, sticky='ns')
@@ -637,6 +638,11 @@ class App(tk.Tk):
                 s = i.replace('\n' , '')
                 lst.append(s)
                 self.ppt_list.insert(tk.END , s)
+                
+    def on_ppt_destroy(self):
+        self.que.clear()
+        self.ppt.destroy()
+        self.ppt = None
                 
     def on_undo(self , enent=None):
         if self.que:
