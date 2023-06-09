@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 2.6
+I have made it possible to compress the files in the left list box into a ZIP file. Please note that only image files are displayed in the list box, so please check in the explorer if you need to compress other types of files. Also note that PNG files are already heavily compressed, so there will be no change in size between the original image and the compressed file.
+
 * Version 2.5
 I added a halftone feature. I referenced this research page. https://imageprocessing-sankarsrin.blogspot.com/2018/05/bayers-digital-halftoning-dispersed-and.html
 
@@ -112,12 +115,13 @@ Courier Newフォントがインストールされていないとデフォルト
 （WindowsだとCourier Newはプリインストールされてる...と思う。）
 
 * バージョン2.5 - ハーフトーン機能の追加（2種類ありますが重ね掛けはできません。Undoしてから選択しなおしてください）
+
+* バージョン2.6 - ZIPファイルに圧縮する機能を追加しました。
  
-以下のgoogle driveの実行ファイルはバージョン1.7のものです。
 
 * 必要な追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
-* 実行ファイル:https://drive.google.com/file/d/1PQ4PhxMu0VRu1GH2LUvx2tiS7RqotvnA/view?usp=sharing
-* 実行ファイルをGoogle Driveに置いておきますがセキュリティの問題があるのでできればご自身でEXE化してください。
+
+* 実行ファイル(Version1.7):https://drive.google.com/file/d/1PQ4PhxMu0VRu1GH2LUvx2tiS7RqotvnA/view?usp=sharing
 
 AUTOMATIC1111を使っている方はstable-diffusion-webuiのフォルダから/venv/Script/pythonw.exeとImage.pywを関連付けて既定のプログラムとし実行してください。
 Image.pywのショートカットを作成しデスクトップに置けばはかどります。
