@@ -78,6 +78,8 @@ I have created a destination window for file transfer. Now, you can send files u
 
 超解像度アップスケーラー(CranV2 , RealESRGAN)
 
+プロンプトジェネレーター（リストから指定するだけ）
+
 アスキーアート作成機能
 
 画像クリップボード機能（貼り付け、コピー）
