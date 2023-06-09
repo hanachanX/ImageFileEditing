@@ -17,11 +17,11 @@ import threading
 import time
 import signal
 import re
+import zipfile
 import subprocess
 import torch
 import concurrent.futures
 from torchvision.transforms.functional import to_tensor
-
 from RealESRGAN import RealESRGAN
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.WARNING , encoding='utf-8')
@@ -172,6 +172,12 @@ class AAEngine():
         width = self.image.width()
         height = self.image.height()
         img = np.array(ImageTk.getimage(self.image))
+        self.var = tk.BooleanVar()
+        self.var.set(True)
+        self.menu = tk.Menu(self.window)
+        self.menu.add_command(label='invert' , command=self.on_invert)
+        self.window.config(menu=self.menu)
+        self.label = None
         # color_set = 'ＭＷ８６５３＜；・．　'[::-1]
         color_set = 'ＭＷＮ＄＠％＃＆Ｂ８９ＥＧＡ６ｍＫ５ＨＲｋｂＹＴ４３Ｖ０ＪＬ７ｇｐａｓｅｙｘｚｎｏｃｖ？ｊＩｆｔｒ１ｌｉ＊＝－～＾｀’：；，．　'[::-1]
         # color_set = '＠Ｗ％ＱＭＢ＆ＮｍＤＲＧＯ８ｇＨＥｗＳＫＡ＄６９０ｄｂＺｑＵｐ５ＰＸ＃ａＣｈ４Ｖ２３ｅｋＦｏｕｎｙＴＹｓｚｘ７１＊ＬＪＩｆｊｔｖｃ＜［］｛＞｝＝？＋／（＼）ｒｌ～！ｉ｜＂＿；－：，＾＇｀．　'[::-1]
@@ -202,11 +208,26 @@ class AAEngine():
                 stream.write(b"\n")
             self.obj = stream.getvalue()
     
+    def on_invert(self):
+        if self.var.get():
+            self.var.set(False)
+        else:
+            self.var.set(True)
+        if self.obj:
+            self.drawing_AA()
+    
     def drawing_AA(self):
         if self.obj:
             obj_text = self.obj.decode('utf-8')
-            self.label = ttk.Label(self.window, text=obj_text, font=('Courier New' , 4), background='black', foreground='white')
-            # self.label = ttk.Label(self.window, text=obj_text, font=('Ms gothic' , 6), background='black', foreground='white')
+            if self.var.get():
+                background_color = 'black'
+                foreground_color = 'white'
+            else:
+                background_color = 'white'
+                foreground_color = 'black'
+            if self.label:
+                self.label.pack_forget()
+            self.label = ttk.Label(self.window, text=obj_text, font=('Courier New' , 4), background=background_color, foreground=foreground_color)
             self.label.pack(side=tk.LEFT)
         else:
             messagebox.showerror('Error' , 'Can not create AA Image')
@@ -417,6 +438,7 @@ class App(tk.Tk):
         self.filemenu2.add_command(label='Rename(Left)' , command= lambda : self.on_rename(1))
         self.filemenu2.add_command(label='Rename(Right)' , command= lambda : self.on_rename(2))
         self.filemenubar.add_cascade(label='Command' , menu=self.filemenu2)
+        self.filemenubar.add_command(label='Archive' , command=self.on_archive)
         self.sendmenu = tk.Menu(self.filemenubar , tearoff=False)
         self.win.config(menu=self.filemenubar)
 
@@ -544,6 +566,29 @@ class App(tk.Tk):
                     continue
                 self.filelist2.insert(tk.END , filename)
                 
+    def on_archive(self , event=None):
+        total_file_size = 0
+        archive_file_size = 0
+        result = messagebox.askyesno('Confirm' , 'Compress the image files in the left listbox to ZIP. Are you sure?')
+        if result:
+            file_list = [f.lower() for f in  os.listdir(self.directory) if f.lower().endswith(('.jpg' , '.png'))]
+            output_path = os.path.join(self.directory, os.path.basename(self.directory) + '.zip')
+            print(output_path)
+            with zipfile.ZipFile(output_path, mode='w') as zfile:
+                for file in file_list:
+                    archived_file = (os.path.join(self.directory, file))
+                    zfile.write(archived_file, arcname=file)
+            archive_file_size = os.path.getsize(output_path)
+            archive_file_size /= 1024**2
+            delete_ = messagebox.askyesno('Confirm' , f'Compression successful. Compressed to {archive_file_size:.2f} MB. Do you want to delete the original data?')
+            if delete_:
+                for file in file_list:
+                    os.remove(self.directory + '/' + file)
+            else:
+                return
+        else:
+            return
+                    
     def update_status(self):
         self.width = self.image.width()
         self.height = self.image.height()
