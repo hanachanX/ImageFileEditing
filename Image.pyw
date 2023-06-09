@@ -13,6 +13,7 @@ import win32clipboard
 import logging
 from tkinter import messagebox
 from tkinter import simpledialog
+from collections import deque
 import threading
 import time
 import signal
@@ -403,15 +404,19 @@ class App(tk.Tk):
         self.upscalemenu.add_command(label='R-ESRGAN' , command=self.on_esrgan_panel)
         self.menubar.add_cascade(label='ULTRA-Resolution' , menu=self.upscalemenu)
         
-        #ASCIIアート
+        # ASCIIアート
         self.menubar.add_command(label='Create AA', command=self.on_aa_panel)
+        
+        # Promptジェネレータ
+        self.menubar.add_command(label='Prompt Gen.' , command=self.on_gen_panel)
+        self.ppt = None
+        self.que = deque()
         
         # ステータスバー
         self.frame_status = tk.Frame(self, bd=1, relief=tk.SUNKEN)
         self.frame_status.pack(side=tk.BOTTOM , fill=tk.X)
         self.status_bar = tk.Label(self.frame_status , text='' , justify=tk.RIGHT, anchor=tk.E)
         self.status_bar.pack(fill=tk.X , padx=10)
-
 
         # UPScale WINDOW
         self.carn = None
@@ -529,7 +534,6 @@ class App(tk.Tk):
         self.dest_dir = ''
 
         # # ディレクトリ情報ファイル問い合わせ
-
         dirfile_dir = r'./dir_config.ini'
         if os.path.isfile(dirfile_dir):
             with open(dirfile_dir , 'r' , encoding='utf-8') as f:
@@ -565,6 +569,112 @@ class App(tk.Tk):
                 if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist2.insert(tk.END , filename)
+                
+    def on_gen_panel(self , event=None):
+        if not self.ppt or ( not self.ppt.winfo_exists()):
+            self.ppt = tk.Toplevel()
+            self.ppt.title('Prompt Generator')
+            self.ppt.geometry('500x800')
+            self.ppt.withdraw()
+            self.ppt.update()
+            self.ppt.geometry('+%d+%d' % (self.winfo_rootx() + 40, self.winfo_rooty() + 40))
+            self.ppt.deiconify()
+            self.ppt_list = tk.Listbox(self.ppt , width=60 , height=30)
+            self.ppt_scroll = ttk.Scrollbar(self.ppt  , command=self.ppt_list.yview)
+            self.ppt_scroll.grid(row=0, column=4, sticky='ns')
+            self.ppt_list.config(yscrollcommand=self.ppt_scroll.set)
+            
+            self.ppt_enh1 = tk.IntVar()
+            self.ppt_enh1.set(0)
+            self.ppt_r1 = ttk.Radiobutton(self.ppt , text='None' , variable=self.ppt_enh1 , value=0)
+            self.ppt_r2 = ttk.Radiobutton(self.ppt , text='x1' , variable=self.ppt_enh1 , value=1)
+            self.ppt_r3 = ttk.Radiobutton(self.ppt , text='x2' , variable=self.ppt_enh1 , value=2)
+            self.ppt_r4 = ttk.Radiobutton(self.ppt , text='x3' , variable=self.ppt_enh1 , value=3)
+            
+            self.ppt_enh2 = tk.DoubleVar()
+            self.ppt_enh2.set(1.0)
+            self.ppt_r5 = ttk.Radiobutton(self.ppt , text='0.8' , variable=self.ppt_enh2 , value=0.8)
+            self.ppt_r6 = ttk.Radiobutton(self.ppt , text='0.9', variable=self.ppt_enh2 , value=0.9)
+            self.ppt_r7 = ttk.Radiobutton(self.ppt , text='1.0', variable=self.ppt_enh2 , value=1.0)
+            self.ppt_r8 = ttk.Radiobutton(self.ppt , text='1.1', variable=self.ppt_enh2 , value=1.1)
+            self.ppt_r9 = ttk.Radiobutton(self.ppt , text='1.2', variable=self.ppt_enh2 , value=1.2)
+            self.ppt_r10 = ttk.Radiobutton(self.ppt , text='1.3', variable=self.ppt_enh2 , value=1.3)
+            self.ppt_r11 = ttk.Radiobutton(self.ppt , text='1.4', variable=self.ppt_enh2 , value=1.4)
+            self.ppt_r12 = ttk.Radiobutton(self.ppt , text='1.5', variable=self.ppt_enh2 , value=1.5)
+            
+            self.ppt_copy = ttk.Button(self.ppt , text='Copy' , command=self.on_to_clipboard)
+            self.ppt_undo = ttk.Button(self.ppt , text='Undo' , command=self.on_undo)
+            self.ppt_text = tk.Text(self.ppt , width=50 , height=10)
+            self.ppt_sep = ttk.Separator(self.ppt)
+            
+            self.ppt_list.grid(row=0 , column=0 , columnspan=4 , padx=10 , pady=10 , sticky=tk.EW)
+            
+            self.ppt_r1.grid(row=1 , column=0 , padx=10 , pady=10)
+            self.ppt_r2.grid(row=1 , column=1 , padx=10 , pady=10)
+            self.ppt_r3.grid(row=1 , column=2 , padx=10 , pady=10)
+            self.ppt_r4.grid(row=1 , column=3 , padx=10 , pady=10)
+            
+            self.ppt_sep.grid(row=2 , column=0 , columnspan=4 , sticky=tk.EW)
+            
+            self.ppt_r5.grid(row=3 , column=0 , padx=10 , pady=10)
+            self.ppt_r6.grid(row=3 , column=1 , padx=10 , pady=10)
+            self.ppt_r7.grid(row=3 , column=2 , padx=10 , pady=10)
+            self.ppt_r8.grid(row=3 , column=3 , padx=10 , pady=10)
+            self.ppt_r9.grid(row=4 , column=0 , padx=10 , pady=10)
+            self.ppt_r10.grid(row=4 , column=1 , padx=10 , pady=10)
+            self.ppt_r11.grid(row=4 , column=2 , padx=10 , pady=10)
+            self.ppt_r12.grid(row=4 , column=3 , padx=10 , pady=10)
+            self.ppt_text.grid(row=5 , column=0 , columnspan=3 , rowspan=2 ,  padx=10 , pady=10)
+            self.ppt_copy.grid(row=5 , column=3 , padx=10 , pady=10)
+            self.ppt_undo.grid(row=6 , column=3 , padx=10 , pady=10)
+            
+            self.ppt_list.bind('<Double-Button-1>' , self.on_put_prompt)
+            
+            with open('prompt.txt' , 'r' , encoding='utf-8') as f:
+                prompts = f.readlines()
+            lst = []
+            for i in prompts:
+                s = i.replace('\n' , '')
+                lst.append(s)
+                self.ppt_list.insert(tk.END , s)
+                
+    def on_undo(self , enent=None):
+        if self.que:
+            if len(self.que) > 1:
+                self.que.pop()
+                put_data = self.que[-1]
+                self.ppt_text.delete('1.0' , 'end-1c')
+                self.ppt_text.insert(tk.END , put_data)
+            else:
+                self.ppt_text.delete('1.0' , 'end-1c')
+                self.que.clear()
+                
+    def on_put_prompt(self , event=None):
+        enh = self.ppt_enh1.get()
+        sth = self.ppt_enh2.get()
+        if sth != 1.0:
+            index = self.ppt_list.curselection()[0]
+            put_data = self.ppt_list.get(index)
+            put_data += ':' + str(sth)
+        else:
+            index = self.ppt_list.curselection()[0]
+            put_data = self.ppt_list.get(index)
+        if enh == 1:
+            put_data = '(' + put_data + ')'
+        elif enh == 2:
+            put_data = '((' + put_data + '))'
+        elif enh == 3:
+            put_data = '(((' + put_data + ')))'
+        if self.que:
+            put_data = ', ' + put_data 
+        self.ppt_text.insert(tk.END , put_data)
+        history = self.ppt_text.get('1.0' , 'end-1c')
+        self.que.append(history) 
+            
+    def on_to_clipboard(self , event=None):
+        text = self.ppt_text.get('1.0' , 'end-1c')
+        self.clipboard_clear()
+        self.clipboard_append(text)
                 
     def on_archive(self , event=None):
         total_file_size = 0
@@ -1412,6 +1522,8 @@ class App(tk.Tk):
             if switch:
                 target_file = self.filelist1.get(index)
                 full_path = os.path.join(self.directory , target_file)
+                # if os.path.splitext(full_path)[-1].lower() == 'zip':
+                #     self.confirm_unzip()
             else:
                 target_file = self.filelist2.get(index)
                 full_path = os.path.join(self.senddir , target_file)
