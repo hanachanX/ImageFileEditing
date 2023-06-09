@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 2.7
+I have implemented a prompt generator. Please customize 'prompt.txt' as desired.
+
 * Version 2.6
 I have made it possible to compress the files in the left list box into a ZIP file. Please note that only image files are displayed in the list box, so please check in the explorer if you need to compress other types of files. Also note that PNG files are already heavily compressed, so there will be no change in size between the original image and the compressed file.
 
@@ -68,10 +71,16 @@ I have created a destination window for file transfer. Now, you can send files u
     It also has real-time monitoring of image files that are generated automatically by AI and continue to accumulate.
 
 ***
-StableDiffusion(AUTOMATIC1111)で生成された大量の画像ファイル（JPGないしPNGのみ対応）の内容確認と削除を実行を目的としたツール。
-リストボックスにファイル一覧が表示されますので上下キーで画像を確認し削除したい場合はDeleteキーで削除が実行されます。
-このリストボックスはディレクトリをリアルタイムで監視しているのでAI画像自動生成などをしてファイルが追加されたらリアルタイムでリストボックスに反映されます。
-簡単な画像加工ツールがあります
+# アプリ概要
+ファイラー機能（ファイルの削除、移動、圧縮）
+
+画像加工機能（ガウシアンぼかし、ガンマ補正、鉛筆画、RGB調整、HSV調整、コントラスト調整、モザイク加工（矩形指定可）、トリミング、グレースケール変換、セピア調変換、ハーフトーン変換、ミラー変換）
+
+超解像度アップスケーラー(CranV2 , RealESRGAN)
+
+アスキーアート作成機能
+
+画像クリップボード機能（貼り付け、コピー）
 
 * バージョン1.1　- ガンマ補正機能追加
 
@@ -117,6 +126,8 @@ Courier Newフォントがインストールされていないとデフォルト
 * バージョン2.5 - ハーフトーン機能の追加（2種類ありますが重ね掛けはできません。Undoしてから選択しなおしてください）
 
 * バージョン2.6 - ZIPファイルに圧縮する機能を追加しました。
+
+* バージョン2.7 - プロンプトジェネレーターを実装しました。'prompt.txt'は自分でカスタマイズできるようになっているので自分の使いやすいようカスタマイズしてください。使い方は使っていれば分かります。
  
 
 * 必要な追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
