@@ -574,7 +574,7 @@ class App(tk.Tk):
         if not self.ppt or ( not self.ppt.winfo_exists()):
             self.ppt = tk.Toplevel()
             self.ppt.title('Prompt Generator')
-            self.ppt.geometry('500x800')
+            self.ppt.geometry('500x830')
             self.ppt.withdraw()
             self.ppt.update()
             self.ppt.geometry('+%d+%d' % (self.winfo_rootx() + 40, self.winfo_rooty() + 40))
@@ -605,7 +605,8 @@ class App(tk.Tk):
             
             self.ppt_copy = ttk.Button(self.ppt , text='Copy' , command=self.on_to_clipboard)
             self.ppt_undo = ttk.Button(self.ppt , text='Undo' , command=self.on_undo)
-            self.ppt_text = tk.Text(self.ppt , width=50 , height=10)
+            ppt_font = Font(family='Helvetica' , size=10)
+            self.ppt_text = tk.Text(self.ppt , width=50 , height=10 , font=ppt_font)
             self.ppt_sep = ttk.Separator(self.ppt)
             
             self.ppt_list.grid(row=0 , column=0 , columnspan=4 , padx=10 , pady=10 , sticky=tk.EW)
