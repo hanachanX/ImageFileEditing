@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 2.8
+I Added a function to convert images into dot art and painting styles.
+
 * Version 2.7
 I have implemented a prompt generator. Please customize 'prompt.txt' as desired.
 
@@ -129,8 +132,9 @@ Courier Newフォントがインストールされていないとデフォルト
 
 * バージョン2.6 - ZIPファイルに圧縮する機能を追加しました。
 
-* バージョン2.7 - プロンプトジェネレーターを実装しました。'prompt.txt'は自分でカスタマイズできるようになっているので自分の使いやすいようカスタマイズしてください。使い方は使っていれば分かります。
+* バージョン2.7 - プロンプトジェネレーターを実装しました。'prompt.txt'は自分でカスタマイズできるようになっているので自分の使いやすいよう変更してください。使い方は使っていれば分かります。
  
+* バージョン2.8 - ドットアートと絵画風に画像を変換する機能を追加しました。日経ソフトウェア2023年7月号の記事を参考にしました。
 
 * 必要な追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
 

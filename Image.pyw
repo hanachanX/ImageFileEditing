@@ -4,7 +4,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkinter.font import Font
 import os
-from PIL import Image , ImageTk , ImageGrab
+from PIL import Image , ImageTk , ImageGrab , ImageDraw
 from PIL.Image import Resampling
 import cv2
 import numpy as np
@@ -20,6 +20,7 @@ import signal
 import re
 import zipfile
 import subprocess
+import random
 import torch
 import concurrent.futures
 from torchvision.transforms.functional import to_tensor
@@ -107,13 +108,21 @@ def cv2_to_pil(image):
     return Image.fromarray(ret)
 
 def tk_to_pil(image):
-
     ret = tk_to_cv2(image)
     return cv2_to_pil(ret)
+
+def tk_to_tensor(image):
+    return torch.from_numpy(np.array(ImageTk.getimage(image)).transpose((2,0,1)))
 
 def adjust_contrast(img, alpha=1.0, beta=0.0):
     adjusted = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
     return adjusted
+
+def add_noise(pil_img, sigma=10):
+    tensor_img = to_tensor(pil_img)
+    noisy_tensor = tensor_img + torch.randn_like(tensor_img) * sigma / 255.0
+    out_image = to_pil_image(noisy_tensor.clamp(0, 1))
+    return out_image
 
 def bayers(img,met):
     
@@ -387,6 +396,8 @@ class App(tk.Tk):
         self.processmenu.add_command(label='Sepia conv.' , command=self.on_sepia)
         self.processmenu.add_command(label='Half-Tone1' , command=lambda : self.on_half(1))
         self.processmenu.add_command(label='Half-Tone2' , command=lambda : self.on_half(0))
+        self.processmenu.add_command(label='Dot-Art' , command=self.on_dot)
+        self.processmenu.add_command(label='Painterly style' ,  command=self.on_paint)
         self.processmenu.add_command(label='Mirror' , command=self.on_mirror)
         self.processmenu.add_command(label='Cropping' , command=self.on_trim)
         self.menubar.add_cascade(label='Conv' , menu=self.processmenu)
@@ -570,6 +581,44 @@ class App(tk.Tk):
                     continue
                 self.filelist2.insert(tk.END , filename)
                 
+    def on_paint(self , event=None):
+        if self.image:
+            pil_img = ImageTk.getimage(self.image)
+            img_w , img_h = self.image.width() , self.image.height()
+            out_image = Image.new('RGB' , (img_w , img_h))
+            draw = ImageDraw.Draw(out_image)
+            for i in range(img_w*img_h):
+                x = random.randint(0 , img_w-1)
+                y = random.randint(0 , img_h-1)
+                rgb = pil_img.getpixel((x , y))
+                r = random.randint(1 , 8)
+                draw.ellipse((x , y , x+r , y+r) , fill=rgb , outline=None)
+            self.image = ImageTk.PhotoImage(out_image)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+        else:
+            messagebox.showerror('Error' , 'Display Image')
+    
+                
+    def on_dot(self , event=None):
+        if self.image:
+            tensor = tk_to_tensor(self.image)
+            sz = 10
+            height , width = tensor.shape[1:]
+            dst_img = Image.new('RGB' , (width , height))
+            draw = ImageDraw.Draw(dst_img)
+            for y in range( 0 , height , sz):
+                for x in range(0 , width , sz):
+                    rgb = tensor[: , y:y+sz , x:x+sz]
+                    r = torch.mean(rgb[0,:,:].float()).to(torch.uint8)
+                    g = torch.mean(rgb[1,:,:].float()).to(torch.uint8)
+                    b = torch.mean(rgb[2,:,:].float()).to(torch.uint8)
+                    draw.ellipse((x+1 , y+1 , x+sz-1 , y+sz-1) , fill=(r , g , b) , outline=None)
+            self.image = ImageTk.PhotoImage(dst_img)
+            self.canvas.create_image(0,0, image=self.image , anchor=tk.NW)
+        else:
+            messagebox.showerror('Error' , 'Display Image')
+                    
+                
     def on_gen_panel(self , event=None):
         if not self.ppt or ( not self.ppt.winfo_exists()):
             self.ppt = tk.Toplevel()
@@ -641,6 +690,8 @@ class App(tk.Tk):
                 self.ppt_list.insert(tk.END , s)
                 
     def on_ppt_destroy(self):
+        self.ppt_enh1.set(0)
+        self.ppt_enh2.set(1.0)
         self.que.clear()
         self.ppt.destroy()
         self.ppt = None
@@ -2016,42 +2067,6 @@ class App(tk.Tk):
             messagebox.showerror('Error' , 'Display Image!!!')
             self.popup.destroy()
             self.popup = None
-            
-        
-    # def update_green(self , value):
-    #     val = self.var_G.get()/10
-    #     self.label2.config(text=f'G:{val:.1f}')
-        
-    # def update_red(self , value):
-    #     val = self.var_R.get()/10
-    #     self.label3.config(text=f'R:{val:.1f}')
-    
-    # def on_exec_change(self , event=None):
-    #     if self.image:
-    #         B = self.var_B.get()/10
-    #         G = self.var_G.get()/10
-    #         R = self.var_R.get()/10
-    #         arr_image = np.array(ImageTk.getimage(self.image)).astype(np.float32)
-    #         arr_image = cv2.cvtColor(arr_image , cv2.COLOR_RGB2BGR)
-    #         arr_image /= 255.0
-    #         blue_array = arr_image[:,:,0]
-    #         green_array = arr_image[:,:,1]
-    #         red_array = arr_image[:,:,2]
-    #         blue_array *= B
-    #         green_array *= G
-    #         red_array *= R
-    #         img = arr_image.copy()
-    #         img[:,:,0] = blue_array
-    #         img[:,:,1] = green_array
-    #         img[:,:,2] = red_array
-    #         img = np.clip(img ,0 , 1.0)
-    #         arr_uint8 = (img*255).astype(np.uint8)
-    #         arr_uint8 = cv2.cvtColor(arr_uint8 , cv2.COLOR_BGR2RGB)
-    #         self.image = ImageTk.PhotoImage(Image.fromarray(arr_uint8))
-    #         self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
-    #         self.popup.destroy()
-    #     else:
-    #         messagebox.showerror('Error','Display Image')
             
     def quit(self):
         self.destroy()
