@@ -579,7 +579,7 @@ class App(tk.Tk):
                 if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist2.insert(tk.END , filename)
-                
+    
     def on_poster_panel(self , event=None):
         if not self.poster or (not self.poster.winfo_exists()):
             self.poster = tk.Toplevel()
@@ -605,7 +605,11 @@ class App(tk.Tk):
             
     def on_poster_destroy(self):
         self.image = self.image_poster
+        self.canvas.delete('image')
+        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
+        self.image_poster = None
         self.poster.destroy()
+        self.poster = None
         self.poster_var.set(2)
 
     def on_wheel_poster(self , event=None):
@@ -623,7 +627,7 @@ class App(tk.Tk):
             self.image_arr = np.uint8(self.image_arr / sz)
             self.image_arr = np.uint8(self.image_arr * sz + buf)
             self.image_poster = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
-            self.canvas.create_image(0,0,image=self.image_poster , anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image_poster , anchor=tk.NW, tag="image")
         else:
             messagebox.showerror('Error' , 'Display Image')
                 
@@ -640,7 +644,7 @@ class App(tk.Tk):
                 r = random.randint(1 , 8)
                 draw.ellipse((x , y , x+r , y+r) , fill=rgb , outline=None)
             self.image = ImageTk.PhotoImage(out_image)
-            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
         else:
             messagebox.showerror('Error' , 'Display Image')
     
@@ -660,7 +664,7 @@ class App(tk.Tk):
                     b = torch.mean(rgb[2,:,:].float()).to(torch.uint8)
                     draw.ellipse((x+1 , y+1 , x+sz-1 , y+sz-1) , fill=(r , g , b) , outline=None)
             self.image = ImageTk.PhotoImage(dst_img)
-            self.canvas.create_image(0,0, image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0,0, image=self.image , anchor=tk.NW, tag="image")
         else:
             messagebox.showerror('Error' , 'Display Image')
                     
@@ -901,7 +905,7 @@ class App(tk.Tk):
             out_np = (out_np * 255).astype(np.uint8)
             h, w, _ = out_np.shape
             self.image = ImageTk.PhotoImage(Image.fromarray(out_np))
-            self.canvas.create_image(0, 0, image=self.image, anchor=tk.NW)
+            self.canvas.create_image(0, 0, image=self.image, anchor=tk.NW, tag="image")
             self.wm_geometry(f'{w}x{h}')
             self.update_status()
             self.carn.destroy()
@@ -969,7 +973,7 @@ class App(tk.Tk):
                 self.image_arr = cv2.resize(self.image_arr , dsize=None , fx=mag/4.0 , fy=mag/4.0 , interpolation=cv2.INTER_LANCZOS4 )
             w , h , _ = self.image_arr.shape
             self.image = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
-            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
             self.wm_geometry(f'{self.image.width()}x{self.image.height()}')
             self.update_status()
             self.esrgan.destroy()
@@ -982,7 +986,7 @@ class App(tk.Tk):
         if self.image:
             self.image_arr = bayers(self.image , pattern)
             self.image = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
-            self.canvas.create_image(0,0,image=self.image, anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image, anchor=tk.NW, tag="image")
         else:
             messagebox.showerror('Error' , 'Display Image')
             
@@ -1078,7 +1082,7 @@ class App(tk.Tk):
         self.image_arr = adjust_contrast(self.image_arr , alpha , beta=0.0)
         
         self.image_cont = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
-        self.canvas.create_image(0,0,image=self.image_cont , anchor=tk.NW)
+        self.canvas.create_image(0,0,image=self.image_cont , anchor=tk.NW, tag="image")
                         
     def on_hsv_panel(self):
         if self.image:
@@ -1198,7 +1202,7 @@ class App(tk.Tk):
         rgb = self.change_hsv(self.image_arr , h_val , s_val , v_val)
         rgb = np.clip(rgb , 0 , 255)
         self.image = ImageTk.PhotoImage(Image.fromarray(rgb))
-        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
 
     def popup_menu(self , event):
         '''
@@ -1363,7 +1367,7 @@ class App(tk.Tk):
             PIL_img = ImageTk.getimage(self.image)
             cropped_image = PIL_img.crop((self.start_x , self.start_y , self.end_x , self.end_y))
             self.image = ImageTk.PhotoImage(cropped_image)
-            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
             width = self.end_x - self.start_x
             height = self.end_y - self.start_y
             self.wm_geometry(f'{width}x{height}')
@@ -1379,7 +1383,7 @@ class App(tk.Tk):
             cv2_img = np.array(ImageTk.getimage(self.image))
             cv2_img = cv2.flip(cv2_img , 1)
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_img))
-            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
         else:
             messagebox.showinfo('Confirm' , 'Display Image')
 
@@ -1392,7 +1396,7 @@ class App(tk.Tk):
             else:
                 sepia_image = sepia(img_pil)
             self.image = ImageTk.PhotoImage(Image.fromarray(sepia_image))
-            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
         else:
             messagebox.showinfo('Confirm' , 'Display Image')
 
@@ -1401,7 +1405,7 @@ class App(tk.Tk):
             cv2_image = np.array(ImageTk.getimage(self.image))
             cv2_image = cv2.cvtColor(cv2_image , cv2.COLOR_RGB2GRAY)
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_image))
-            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
         else:
             messagebox.showinfo('Confirm' , 'Display Image')
 
@@ -1439,9 +1443,9 @@ class App(tk.Tk):
         corrected_image = np.power(image_cv2 / 255.0 , inv_gamma) *255.0
         corrected_image = np.clip(corrected_image , 0 , 255).astype(np.uint8)
         self.image = ImageTk.PhotoImage(Image.fromarray(corrected_image))
-        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
 
-        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
         self.gamma.destroy()
         self.gamma = False
 
@@ -1634,8 +1638,7 @@ class App(tk.Tk):
             self.image = self.original = ImageTk.PhotoImage(Image.open(full_path))
             if self.image:
                 self.width , self.height = self.image.width() , self.image.height()
-                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
-                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
                 self.wm_geometry(f'{self.width}x{self.height}')
                 self.update_status()
                 logger.debug('%s , %s' ,full_path ,  os.path.splitext(full_path)[1].lower())
@@ -1675,7 +1678,7 @@ class App(tk.Tk):
             self.image = Image.open(self.image_path)
             self.width , self.height = self.image.size
             self.image = self.original = ImageTk.PhotoImage(self.image)
-            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
             self.wm_geometry(str(self.width) + 'x' + str(self.height))
             if os.path.splitext(self.image_path)[1].lower() == '.png':
                 if check_text_chunk(self.image_path):
@@ -1700,7 +1703,7 @@ class App(tk.Tk):
                 self.text1.config(state='disabled')
                 self.text2.config(state='disabled')
                 self.text3.config(state='disabled')
-            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
             self.wm_geometry(f'{self.width}x{self.height}')
             self.update_status()
 
@@ -1755,7 +1758,7 @@ class App(tk.Tk):
             arr_img = cv2.cvtColor(arr_img , cv2.COLOR_BGR2RGB)
             img = Image.fromarray(arr_img)
             self.image = ImageTk.PhotoImage(img)
-            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
         else:
             messagebox.showerror('Error','Display Image')
 
@@ -1768,7 +1771,7 @@ class App(tk.Tk):
         image = cv2.resize(image , dsize=(w , h) , interpolation=cv2.INTER_LANCZOS4)
         image = cv2_to_pil(image)
         self.image = ImageTk.PhotoImage(image) 
-        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
         self.wm_geometry(str(w)+'x'+str(h))
         self.update_status()
     
@@ -1791,7 +1794,7 @@ class App(tk.Tk):
                 image[y:y+block_size , x:x+block_size] = mean
         image = cv2_to_pil(image)
         self.image = ImageTk.PhotoImage(image)
-        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+        self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
         self.mosaic_window.destroy()
         self.mosaic_window = None
 
@@ -1830,7 +1833,7 @@ class App(tk.Tk):
                             color_array = np.ones((block_size, block_size, 3), dtype=np.uint8) * mean_color
                             img[y:y+block_size , x:x+block_size] = color_array
                 self.image = ImageTk.PhotoImage(Image.fromarray(img))
-                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
             else:
                 self.canvas.delete('rect')
             self.canvas.unbind('<Button-1>')
@@ -1901,7 +1904,7 @@ class App(tk.Tk):
             gaus = cv2.GaussianBlur(self.image_arr , ksize=kernel , sigmaX=sigmaX)
             self.image = cv2_to_pil(gaus)
             self.image = ImageTk.PhotoImage(self.image)
-            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
             top_window.destroy()
         else:
             messagebox.showerror('Error','Display Image')
@@ -1926,7 +1929,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(self.image)
             if self.image:
                 self.original = self.image
-                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
                 self.wm_geometry(str(self.width)+'x'+str(self.height))
                 self.update_status()
         elif isinstance(self.image , bytes):
@@ -1938,7 +1941,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(rgb_image)
             if self.image:
                 self.original = self.image
-                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW)
+                self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
                 self.update_status()
         elif isinstance(self.image , list):
@@ -1947,7 +1950,7 @@ class App(tk.Tk):
             self.image = ImageTk.PhotoImage(img)
             if self.image:
                 self.original = self.image
-                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+                self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
                 self.update_status()
         else:
@@ -1976,7 +1979,7 @@ class App(tk.Tk):
         self.var.set(11.0)
         self.update_resize_scale(self.var)
         self.resize_slidar = ttk.Scale(top_window , from_=1 , to=30 , length=200 , variable=self.var , command=self.update_resize_scale)
-        self.resize_button = ttk.Button(top_window , text='＞' , command=self.on_exec_resize)
+        self.resize_button = ttk.Button(top_window , text='exec.' , command=self.on_exec_resize)
         self.resize_slidar.grid(row=0 , column=0 , pady=10)
         self.resize_label.grid(row=0 , column=1 , padx=10 ,  pady=10)
         self.resize_button.grid(row=1, column=1 , padx=10 , pady=10)
@@ -1985,10 +1988,10 @@ class App(tk.Tk):
     def on_resize_opt(self , event=None):
         if self.image:
             cv2_img = np.array(ImageTk.getimage(self.image))
-            cv2_img = cv2.resize(cv2_img , dsize=None , fx=1.05 , fy=1.05)
+            cv2_img = cv2.resize(cv2_img , dsize=None , fx=1.05 , fy=1.05 , interpolation=cv2.INTER_LANCZOS4)
             h , w , _ = cv2_img.shape
             self.image = ImageTk.PhotoImage(Image.fromarray(cv2_img))
-            self.canvas.create_image(0, 0 , image=self.image , anchor=tk.NW)
+            self.canvas.create_image(0, 0 , image=self.image , anchor=tk.NW, tag="image")
             self.wm_geometry(f'{w}x{h}')
             self.update_status()
 
@@ -2004,7 +2007,7 @@ class App(tk.Tk):
             arr_img = cv2.resize(arr_img , dsize=None , fx=rate , fy=rate ,interpolation=cv2.INTER_LANCZOS4)
             height , width , _ = arr_img.shape
             self.image = ImageTk.PhotoImage(Image.fromarray(arr_img))
-            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW)
+            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
             self.wm_geometry(f'{width}x{height}')
             self.update_status
             top_window.destroy()
@@ -2108,7 +2111,7 @@ class App(tk.Tk):
                 self.image_arr = np.clip(self.image_arr , 0  , 1)
                 arr_uint8 = (self.image_arr*255).astype(np.uint8)
                 self.image_tmp = ImageTk.PhotoImage(Image.fromarray(arr_uint8))
-                self.canvas.create_image(0,0,image=self.image_tmp,anchor=tk.NW)
+                self.canvas.create_image(0,0,image=self.image_tmp,anchor=tk.NW, tag="image")
         else:
             messagebox.showerror('Error' , 'Display Image!!!')
             self.popup.destroy()
