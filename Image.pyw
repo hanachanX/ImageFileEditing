@@ -404,7 +404,7 @@ class App(tk.Tk):
 
         # アップスケール
         self.upscalemenu = tk.Menu(self.menubar , tearoff=False)
-        self.upscalemenu.add_command(label='CARN' , command=self.on_carn_panel)
+        self.upscalemenu.add_command(label='CARNv2' , command=self.on_carn_panel)
         self.upscalemenu.add_command(label='R-ESRGAN' , command=self.on_esrgan_panel)
         self.menubar.add_cascade(label='ULTRA-Resolution' , menu=self.upscalemenu)
         
