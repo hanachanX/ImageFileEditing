@@ -605,8 +605,6 @@ class App(tk.Tk):
             
     def on_poster_destroy(self):
         self.image = self.image_poster
-        self.canvas.delete('image')
-        self.canvas.create_image(0,0,image=self.image , anchor=tk.NW, tag="image")
         self.image_poster = None
         self.poster.destroy()
         self.poster = None
@@ -627,6 +625,7 @@ class App(tk.Tk):
             self.image_arr = np.uint8(self.image_arr / sz)
             self.image_arr = np.uint8(self.image_arr * sz + buf)
             self.image_poster = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
+            self.canvas.delete('image')
             self.canvas.create_image(0,0,image=self.image_poster , anchor=tk.NW, tag="image")
         else:
             messagebox.showerror('Error' , 'Display Image')
