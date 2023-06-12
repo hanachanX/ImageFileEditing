@@ -1566,9 +1566,9 @@ class App(tk.Tk):
                         else:
                             self.filelist1.selection_set(selected_index)
                             self.filelist1.activate(selected_index)
-                            event = tk.Event()
-                            event.widget = self.filelist1
-                            self.on_draw(event=event)
+                        event = tk.Event()
+                        event.widget = self.filelist1
+                        self.on_draw(event=event)
                         self.filelist1.focus_force()
 
                     else:
