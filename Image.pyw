@@ -118,12 +118,6 @@ def adjust_contrast(img, alpha=1.0, beta=0.0):
     adjusted = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
     return adjusted
 
-def add_noise(pil_img, sigma=10):
-    tensor_img = to_tensor(pil_img)
-    noisy_tensor = tensor_img + torch.randn_like(tensor_img) * sigma / 255.0
-    out_image = to_pil_image(noisy_tensor.clamp(0, 1))
-    return out_image
-
 def bayers(img,met):
     
     # Bayers HalfToning Algorithm https://imageprocessing-sankarsrin.blogspot.com/2018/05/bayers-digital-halftoning-dispersed-and.html
@@ -264,8 +258,6 @@ class DirectoryWatcher(threading.Thread):
 
     def stop(self):
         self.running = False
-
-
 class PlaceHolder(tk.Entry):
     def __init__(self, master=None, placeholder="", color='grey', **kwargs):
         super().__init__(master, **kwargs)
@@ -398,6 +390,7 @@ class App(tk.Tk):
         self.processmenu.add_command(label='Half-Tone2' , command=lambda : self.on_half(0))
         self.processmenu.add_command(label='Dot-Art' , command=self.on_dot)
         self.processmenu.add_command(label='Painterly style' ,  command=self.on_paint)
+        self.processmenu.add_command(label='Posterization' , command=self.on_poster_panel)
         self.processmenu.add_command(label='Mirror' , command=self.on_mirror)
         self.processmenu.add_command(label='Cropping' , command=self.on_trim)
         self.menubar.add_cascade(label='Conv' , menu=self.processmenu)
@@ -439,6 +432,12 @@ class App(tk.Tk):
         self.aa = None
         self.aa_var = tk.IntVar()
         self.show_aa = None
+        
+        # posterization用パネル
+        self.poster = None
+        self.poster_var = tk.IntVar()
+        self.poster_var.set(2)
+        self.image_poster = None
 
         #　設定メニュー
         # self.configmenu = tk.Menu(self.menubar , tearoff=0)
@@ -580,6 +579,53 @@ class App(tk.Tk):
                 if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist2.insert(tk.END , filename)
+                
+    def on_poster_panel(self , event=None):
+        if not self.poster or (not self.poster.winfo_exists()):
+            self.poster = tk.Toplevel()
+            self.poster.title('Posterization')
+            self.poster.geometry('350x100')
+            self.poster.protocol('WM_DELETE_WINDOW' , self.on_poster_destroy)
+            self.poster.withdraw()
+            self.poster.update()
+            self.poster.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()+20}')
+            self.poster.deiconify()
+            self.poster_scale = ttk.Scale(self.poster,
+                                          from_=2,
+                                          to=4,
+                                          length=200,
+                                          orient=tk.HORIZONTAL,
+                                          variable=self.poster_var,
+                                          command=self.on_update_poster)
+            self.poster_label = ttk.Label(self.poster , text='')
+            self.poster_scale.grid(row=0 , column=0 , padx=10 , pady=10)
+            self.poster_label.grid(row=0 , column=1 , padx=10 , pady=10)
+            self.on_update_poster()
+            self.poster.bind("<MouseWheel>" , self.on_wheel_poster)
+            
+    def on_poster_destroy(self):
+        self.image = self.image_poster
+        self.poster.destroy()
+        self.poster_var.set(2)
+
+    def on_wheel_poster(self , event=None):
+        if event.delta > 0 and self.poster_scale.get() < self.poster_scale.cget('to'):
+            self.poster_scale.set(self.poster_scale.get() + 1)
+        elif event.delta < 0 and self.poster_scale.get() > self.poster_scale.cget('from'):
+            self.poster_scale.set(self.poster_scale.get() - 1)
+        
+    def on_update_poster(self , event=None):
+        if self.image:
+            self.poster_label.config(text=f'quantize:{self.poster_var.get()}')
+            sz = 256 / self.poster_var.get()
+            buf = sz / 2
+            self.image_arr = np.array(ImageTk.getimage(self.image))
+            self.image_arr = np.uint8(self.image_arr / sz)
+            self.image_arr = np.uint8(self.image_arr * sz + buf)
+            self.image_poster = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
+            self.canvas.create_image(0,0,image=self.image_poster , anchor=tk.NW)
+        else:
+            messagebox.showerror('Error' , 'Display Image')
                 
     def on_paint(self , event=None):
         if self.image:
