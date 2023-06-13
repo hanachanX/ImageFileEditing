@@ -38,7 +38,7 @@ I made it possible to select R-ESRGANx2 and x4 for super resolution conversion. 
 I have enabled the user to specify the area to apply the mosaic effect using a rectangle. Additionally, I have improved the UI and added two buttons to open a folder.
 
 * Version 1.9
-I have made Real-ESRGAN available in addition to CRAN V2 for upscaling images up to twice their original resolution. Even low-resolution images can be upscaled to ultra-high resolution. Both conversion algorithms will run slowly without CUDA. Please note that the author is completely ignorant of machine learning and the code is copy-pasted. The original repository can be found here.
+I have made Real-ESRGAN available in addition to CARN V2 for upscaling images up to twice their original resolution. Even low-resolution images can be upscaled to ultra-high resolution. Both conversion algorithms will run slowly without CUDA. Please note that the author is completely ignorant of machine learning and the code is copy-pasted. The original repository can be found here.
 
 https://github.com/ai-forever/Real-ESRGAN
 
@@ -108,7 +108,7 @@ I have created a destination window for file transfer. Now, you can send files u
 
 * バージョン1.8　- 実験的に超解像度にアップスケールする機能を追加しました。GPUがないとすごく時間がかかるのでお勧めしません。ノイズが混じることがありあくまでも実験的なものです。Exe化はしていません。Common.py , Models.py , CARN_model.ptをImage.pyと同一フォルダに配置して実行してください。
  
-* バージョン1.9　- 超解像度二倍までのアップスケールにCRAN V2の他にReal-ESRGANを利用できるようにしました。
+* バージョン1.9　- 超解像度二倍までのアップスケールにCARN V2の他にReal-ESRGANを利用できるようにしました。
 低解像度の画像でも超高解像度でアップスケーリングが可能です。
 CUDAが使えないとどちらの変換アルゴリズムでも低速です。なお作者は機械学習に全く無知なためコードはコピペです。
 AUTOMATIC1111で低解像度で生成された作品もかなりきれいにアップスケーリングできます。
