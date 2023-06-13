@@ -481,9 +481,11 @@ class App(tk.Tk):
         self.height = None # self.imageの高さ
 
         # GaussianBlur関数用変数
+        self.gaus = None
         self.image_arr = None # CV2 image
-        self.kernel_value = 5 
-        self.sigma_value = 13
+        self.image_tmp = None
+        self.kernel_value = None
+        self.sigma_value = None
 
         # クリックポップアップウィンドウ
         self.bind('<Button-1>' , self.on_resize_opt) # リサイズ
@@ -1728,6 +1730,10 @@ class App(tk.Tk):
         if self.mosaic_window is None or (not hasattr(self.mosaic_window, 'winfo_exists')) or (not self.mosaic_window.winfo_exists()):
             self.mosaic_window = tk.Toplevel()
             self.mosaic_window.title('Settings Mosaic')
+            self.mosaic_window.withdraw()
+            self.mosaic_window.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()+20}')
+            self.mosaic_window.update()
+            self.mosaic_window.deiconify()
             self.slidar_var = tk.DoubleVar()
             self.slidar_var.set(10.0)
             self.frame_mosaic = tk.Frame(self.mosaic_window)
@@ -1741,8 +1747,8 @@ class App(tk.Tk):
                                             variable=self.slidar_var,
                                             command=self.update_mosaic_slidar)
             self.mosaic_exec_button = ttk.Button(self.frame_mosaic , text='Exec',command=self.on_exec_mosaic)
-            self.mosaic_label = ttk.Label(self.frame_mosaic , text='Select Mosaic Area >>>>>' , foreground='blue')
-            self.parcial_mosaic_button = ttk.Button(self.frame_mosaic ,text='Choose Range' , command=self.on_exec_parcial_mosaic)
+            self.mosaic_label = ttk.Label(self.frame_mosaic , text='Select Mosaic ->' , foreground='blue')
+            self.parcial_mosaic_button = ttk.Button(self.frame_mosaic ,text='Specify the range' , command=self.on_exec_parcial_mosaic)
             self.mosaic_slidar.grid(row=0 , column= 0 , pady=10)
             self.mosaic_slidar_label.grid(row=0 , column=1 , pady=10)
             self.mosaic_exec_button.grid(row=0 , column=2 , padx=10 , pady=10)
@@ -1847,64 +1853,83 @@ class App(tk.Tk):
             self.mosaic_window = False
 
     def popup_gaussian(self):
-        global top_window
-        top_window = tk.Toplevel(self)
-        top_window.title('Settings')
-        label1 = ttk.Label(top_window , text='Kernel size')
-        self.label_kernel = ttk.Label(top_window ,text=None)
-        self.kernel_value = tk.DoubleVar(value=5.0)
-        scale1 = ttk.Scale(
-            top_window , 
-            from_=1 , 
-            to=31 , 
-            length=200 , 
-            orient=tk.HORIZONTAL , 
-            variable=self.kernel_value,
-            command=self.update_label_kernel)
-        label2 = ttk.Label(top_window , text='Sigma_X')
-        self.label_sigma = ttk.Label(top_window , text=None)
-        self.sigma_value = tk.DoubleVar(value=13.0)
-        scale2 = ttk.Scale(
-            top_window , 
-            from_=0 , 
-            to=100 , 
-            length=200 , 
-            orient=tk.HORIZONTAL , 
-            variable=self.sigma_value,
-            command=self.update_sigma_label)
-        label1.grid(row=0 , column = 0 , padx=10)
-        scale1.grid(row=1 , column = 0 , padx=10)
-        self.label_kernel.grid(row=1 , column=1 , padx=10)
-        label2.grid(row=5 , column=0 , padx=10)
-        scale2.grid(row=6 , column=0 , padx=10)
-        self.label_sigma.grid(row=6 , column=1 , padx=10)
-        button = ttk.Button(top_window , text='Convert' , command=self.on_Gaussian)
-        button.grid(row=7 , column=1 , padx=10 , pady=10)
+        if not self.gaus or ( not self.gaus.winfo_exists() ):
+            self.gaus = tk.Toplevel(self)
+            self.gaus.title('Gaussian')
+            self.gaus.withdraw()
+            self.gaus.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()+20}')
+            self.gaus.update()
+            self.gaus.deiconify()
+            self.gaus.protocol('WM_DELETE_WINDOW' , self.on_destroy_gaus)
+            # self.label1_g = ttk.Label(self.gaus , text='Kernel size')
+            self.label_kernel = ttk.Label(self.gaus ,text=None)
+            self.kernel_value = tk.IntVar(value=5)
+            val1 , val2 = 0 , 0
+            self.scale1 = ttk.Scale(
+                self.gaus , 
+                from_=1 , 
+                to=31 , 
+                length=200 , 
+                orient=tk.HORIZONTAL , 
+                variable=self.kernel_value,
+                command=lambda val1: self.on_update_gaus(val1))
+            # self.label2_g = ttk.Label(self.gaus , text='Sigma_X')
+            self.label_sigma = ttk.Label(self.gaus , text=None)
+            self.sigma_value = tk.DoubleVar(value=13.0)
 
-    def update_label_kernel(self , value):
-        self.label_kernel.config(text=f'{float(value):.1f}')
+            self.scale2 = ttk.Scale(
+                self.gaus , 
+                from_=0 , 
+                to=100 , 
+                length=200 , 
+                orient=tk.HORIZONTAL , 
+                variable=self.sigma_value,
+                command=lambda val2: self.on_update_gaus(val2))
+            self.scale1.grid(row=1 , column = 0 , padx=10)
+            self.label_kernel.grid(row=1 , column=1 , padx=10)
+            self.scale2.grid(row=6 , column=0 , padx=10)
+            self.label_sigma.grid(row=6 , column=1 , padx=10)
+            self.scale1.bind("<MouseWheel>" , self.on_wheel_kernel)
+            self.scale2.bind("<MouseWheel>" , self.on_wheel_sigma)
+            self.on_update_gaus(None)
+            
+    def on_wheel_kernel(self , event=None):
+        if event.delta > 0 and self.scale1.get() < self.scale1.cget('to'):
+            self.scale1.set(self.scale1.get() + 1)
+        elif event.delta < 0 and self.scale1.get() > self.scale1.cget('from'):
+            self.scale1.set(self.scale1.get() - 1)
+    
+    def on_wheel_sigma(self , event=None):
+        if event.delta > 0 and self.scale2.get() < self.scale2.cget('to'):
+            self.scale2.set(self.scale2.get() + 1)
+        elif event.delta < 0 and self.scale2.get() > self.scale2.cget('from'):
+            self.scale2.set(self.scale2.get() - 1) 
+        
+    def on_destroy_gaus(self):
+        self.image = self.image_tmp
+        self.image_tmp = None
+        self.gaus.destroy()
+        self.gause = None
+        self.kernel_value.set(5)
+        self.sigma_value.set(13.0)
 
-    def update_sigma_label(self , value):
-        self.label_sigma.config(text=f'{float(value)/10:.2f}')
-
-    def get_kernel(self, value):
-        return int(value)
-
-    def get_sigma(self, value):
-        return float(f"{value:.2f}")
-
-    def on_Gaussian(self , event=None):
-        if self.image_arr.any():
-            kernel_size = self.get_kernel(self.kernel_value.get())
-            if not kernel_size % 2:
-                kernel_size += 1
-            kernel = (kernel_size , kernel_size)
-            sigmaX = self.get_sigma(int(self.sigma_value.get()/10))
-            gaus = cv2.GaussianBlur(self.image_arr , ksize=kernel , sigmaX=sigmaX)
-            self.image = cv2_to_pil(gaus)
-            self.image = ImageTk.PhotoImage(self.image)
-            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
-            top_window.destroy()
+    def on_update_gaus(self , event=None):
+        if self.image:
+            kernel = self.kernel_value.get()
+            sigma = self.sigma_value.get()/10
+            self.label_kernel.config(text=f'Kernel:{kernel}')
+            self.label_sigma.config(text=f'Sigma:{sigma:.2f}')
+            if not event:
+                return
+            else:
+                if kernel % 2 == 0:
+                    kernel += 1  
+            kernel_size = (kernel , kernel)
+            self.image_arr = np.array(ImageTk.getimage(self.image))
+            self.image_arr = cv2.GaussianBlur(self.image_arr , ksize=kernel_size , sigmaX=sigma)
+            self.image_tmp = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
+            self.canvas.delete('image')
+            self.canvas.create_image(0,0,image=self.image_tmp,anchor=tk.NW, tag="image")
         else:
             messagebox.showerror('Error','Display Image')
 
