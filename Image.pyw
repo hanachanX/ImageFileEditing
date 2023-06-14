@@ -26,7 +26,7 @@ import concurrent.futures
 from torchvision.transforms.functional import to_tensor
 from RealESRGAN import RealESRGAN
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.DEBUG , encoding='utf-8')
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.WARNING , encoding='utf-8')
 logger = logging.getLogger(__name__)
 
 
@@ -36,15 +36,6 @@ def check_text_chunk(filepath):
             signature = file.read(8)
             if signature != b'\x89PNG\r\n\x1a\n': # 8バイトシグネチャがPNG形式でない。
                 return False
-
-            # while True:
-            #     length_bytes = file.read(4)
-            #     if len(length_bytes) < 4:
-            #         break
-            #     length = int.from_bytes(length_bytes, 'big')
-            #     chunk_type = file.read(4)
-            #     if chunk_type == b'tEXt':
-            #         logger.debug('Exist tEXt chunk')
             data = file.read(0x100)
             if b'\x69\x54\x58\x74' in data or b'\x74\x45\x58\x74' in data:
                 logger.debug('exist tEXt chunk')
