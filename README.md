@@ -82,7 +82,7 @@ I have created a destination window for file transfer. Now, you can send files u
 
 画像加工機能（ガウシアンぼかし、ガンマ補正、鉛筆画、RGB調整、HSV調整、コントラスト調整、モザイク加工（矩形指定可）、トリミング、グレースケール変換、セピア調変換、ハーフトーン変換、ミラー変換 , ドットアート、絵画風　、ポスタリゼーション）
 
-超解像度アップスケーラー(CranV2 , RealESRGAN)
+超解像度アップスケーラー(CarnV2 , RealESRGAN)
 
 プロンプトジェネレーター（リストから指定するだけ）
 
