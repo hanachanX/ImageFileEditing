@@ -860,6 +860,10 @@ class App(tk.Tk):
         else:
             txt = text_data.split(b'\x00')
         text = txt[1].decode('shift-jis' , errors='ignore')
+        text = re.sub(r'[\x01-\x09\x0b\x0c\x0e-\x1f\x7f-\x9f]', ' ', text)
+        text = re.sub(r'[^\x00-\x7f]+' , ' ' , text)
+        # text = text.replace('?' , ' ')
+        
         # Prompt
         pattern1 = re.compile('^(.+)\n.*Negative.+$' , re.DOTALL)
         self.target_text1 = re.sub(pattern1 , r'\1' , text)
