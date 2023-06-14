@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 2.9
+I have added "By Name" and "By Time" to the file list menu. Users can now choose whether to sort the files in the right file list by name or timestamp in ascending order. The left list is sorted by name = time, so it is not supported. I also fixed a bug where the generated information was not displayed correctly.
+
 * Version 2.8
 I Added a function to convert images into dot art and painting styles.
 
@@ -135,6 +138,9 @@ Courier Newフォントがインストールされていないとデフォルト
 * バージョン2.7 - プロンプトジェネレーターを実装しました。'prompt.txt'は自分でカスタマイズできるようになっているので自分の使いやすいよう変更してください。使い方は使っていれば分かります。
  
 * バージョン2.8 - ドットアートと絵画風に画像を変換する機能を追加しました。日経ソフトウェア2023年7月号の記事を参考にしました。
+
+* バージョン2.9 - ファイルリストのメニューに「By Name」「By Time」を追加しました。右ファイルリストを名前かタイムスタンプかどちらの昇順に並べるか選べます。左リストは名前順＝時間順でしょうからそちらは対応してません。
+　生成情報がちゃんと表示されないバグを修正しました。
 
 * 必要な追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
 
