@@ -37,6 +37,7 @@ Loli
 Android
 Detailed eyes
 Tareme
+Tsurime
 Red eyes
 Green eyes
 Real skin texture
@@ -47,11 +48,13 @@ Colorful hair
 Gradient hair
 Brown hair
 White hair
+Floating hair
 Hair ornament
 Straw hat
 Full body
 Upper body
 Mechanical legs
+Combat bodysuit
 Hoodie
 Raincoat
 School Uniform
@@ -88,8 +91,8 @@ Medium breasts
 Big Breasts
 Large breasts
 Absolute Territory
-
-
+Black knee-high socks
+Maid outfit
 
 
 
