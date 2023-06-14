@@ -26,7 +26,7 @@ import concurrent.futures
 from torchvision.transforms.functional import to_tensor
 from RealESRGAN import RealESRGAN
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.WARNING , encoding='utf-8')
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.DEBUG , encoding='utf-8')
 logger = logging.getLogger(__name__)
 
 
@@ -37,15 +37,20 @@ def check_text_chunk(filepath):
             if signature != b'\x89PNG\r\n\x1a\n': # 8バイトシグネチャがPNG形式でない。
                 return False
 
-            while True:
-                length_bytes = file.read(4)
-                if len(length_bytes) < 4:
-                    break
-                length = int.from_bytes(length_bytes, 'big')
-                chunk_type = file.read(4)
-                if chunk_type == b'tEXt':
-                    return True
-                file.seek(length + 4, 1)  # チャンクデータとCRC4バイトはスキップする。
+            # while True:
+            #     length_bytes = file.read(4)
+            #     if len(length_bytes) < 4:
+            #         break
+            #     length = int.from_bytes(length_bytes, 'big')
+            #     chunk_type = file.read(4)
+            #     if chunk_type == b'tEXt':
+            #         logger.debug('Exist tEXt chunk')
+            data = file.read(0x100)
+            if b'\x69\x54\x58\x74' in data or b'\x74\x45\x58\x74' in data:
+                logger.debug('exist tEXt chunk')
+                return True
+                # file.seek(length + 4, 1)  # チャンクデータとCRC4バイトはスキップする。
+            logger.debug('not exist tEXt chunk')
             return False
     except IOError:
         messagebox.showerror("Error", "Failed to read the file.")
@@ -159,6 +164,20 @@ def bayers(img,met):
     ret = cv2.bitwise_not(ret)
 
     return ret
+
+def sort_files_by_timestamp(files , dir):
+    """
+    ファイル名のリストを、最終更新時刻の昇順にソートする関数
+    """
+    # ファイル名と最終更新時刻を格納する辞書オブジェクトを作成
+    file_timestamps = {}
+    for file in files:
+        path = os.path.join(dir, file)
+        file_timestamps[file] = os.path.getmtime(path)
+
+    # 最終更新時刻を昇順にソートしたリストを生成
+    sorted_files = [file for file, _ in sorted(file_timestamps.items(), key=lambda x: x[1])]
+    return sorted_files
 
 class AAEngine():
     def __init__(self , width , image):
@@ -315,7 +334,9 @@ class App(tk.Tk):
         self.win.resizable(False , False)
 
         self.frame1 = ttk.Frame(self.win)
-        self.frame1.grid(row=0,column=0 , pady=10) 
+        self.frame1.grid(row=0,column=0 , pady=10)
+        self.frame2 = ttk.Frame(self.win)
+        self.frame2.grid(row=0 , column=1 , pady=10) 
         self.entry1 = PlaceHolder(self.frame1 , placeholder='Open Source Folder' , color='Gray' , width=25 , justify='right')
         self.entry1.config(state='disabled')
         self.dir_button1 = ttk.Button(self.frame1 , text='Open' , command=self.on_open_dir)
@@ -330,8 +351,6 @@ class App(tk.Tk):
         self.scroll1.grid(row=1, column=2, sticky='ns')
         self.filelist1.config(yscrollcommand=self.scroll1.set)
 
-        self.frame2 = ttk.Frame(self.win)
-        self.frame2.grid(row=0 , column=1 , pady=10)
         self.entry2 = PlaceHolder(self.frame2 , placeholder='Open Destination Folder' , color='Gray' , width=25 , justify='right')
         self.entry2.config(state='disabled')
         self.dir_button2 = ttk.Button(self.frame2 , text='Open' , command=self.on_open_send_dir)
@@ -454,6 +473,8 @@ class App(tk.Tk):
         self.filemenu2.add_command(label='Rename(Right)' , command= lambda : self.on_rename(2))
         self.filemenubar.add_cascade(label='Command' , menu=self.filemenu2)
         self.filemenubar.add_command(label='Archive' , command=self.on_archive)
+        self.filemenubar.add_command(label='By Name' , command=self.on_sort_by_name)
+        self.filemenubar.add_command(label='By Time' , command=self.on_sort_by_time)
         self.sendmenu = tk.Menu(self.filemenubar , tearoff=False)
         self.win.config(menu=self.filemenubar)
 
@@ -498,6 +519,7 @@ class App(tk.Tk):
         self.end_x = None
         self.end_y = None
 
+        x = 0
         # パネル2のコールバック関数の設定
         self.filelist1.bind('<Double-Button-1>' , self.on_draw)
         self.filelist2.bind('<Double-Button-1>' , self.on_draw)
@@ -508,7 +530,8 @@ class App(tk.Tk):
         self.filelist1.bind('<Up>' , self.on_up)
         self.filelist2.bind('<Up>' , self.on_up)
         self.filelist1.bind('<Right>' , self.on_send)
-        self.filelist1.bind('<Delete>' , self.on_delete)
+        self.filelist1.bind('<Delete>' , lambda x: self.on_delete(1))
+        self.filelist2.bind('<Delete>' , lambda x: self.on_delete(2))
 
         # サブスレッドのためのシグナルオブジェクト
         self.watcher = None
@@ -581,7 +604,21 @@ class App(tk.Tk):
                 if os.path.splitext(filename)[1].lower() not in ('.jpeg' , '.jpg' , '.png'):
                     continue
                 self.filelist2.insert(tk.END , filename)
+                
+    def on_sort_by_name(self):
+        items = list(self.filelist2.get(0 , tk.END))
+        items.sort()
+        self.filelist2.delete(0 , tk.END)
+        for item in items:
+            self.filelist2.insert(tk.END , item)
     
+    def on_sort_by_time(self):
+        files = os.listdir(self.dest_dir)
+        sorted_file = sort_files_by_timestamp(files , self.dest_dir)
+        self.filelist2.delete(0 , tk.END)
+        for file in sorted_file:
+            self.filelist2.insert(tk.END , file)
+                
     def on_poster_panel(self , event=None):
         if not self.poster or (not self.poster.winfo_exists()):
             self.poster = tk.Toplevel()
@@ -818,13 +855,20 @@ class App(tk.Tk):
             data = f.read()
         # テキストチャンクの先頭インデックスを取得
         index = data.find(b'\x74\x45\x58\x74')
+        if index == -1:
+            index = data.find(b'\x69\x54\x58\x74')
+        logger.debug('index:%s',index)
         # テキスト長を取得
         length = int.from_bytes(data[index-4:index], byteorder='big')
+        logger.debug('length:%s' , length)
         # テキストデータを取得
         text_data = data[index+4:index+4+length]
         # keyword(parameters)を読み飛ばしテキストを取得する
-        txt = text_data.split(b'\x00')
-        text = txt[1].decode('shift-jis')
+        if b'\x00\x00\x00\x00\x00' in text_data:
+            txt = text_data.split(b'\x00\x00\x00\x00\x00')
+        else:
+            txt = text_data.split(b'\x00')
+        text = txt[1].decode('shift-jis' , errors='ignore')
         # Prompt
         pattern1 = re.compile('^(.+)\n.*Negative.+$' , re.DOTALL)
         self.target_text1 = re.sub(pattern1 , r'\1' , text)
@@ -1461,25 +1505,46 @@ class App(tk.Tk):
         exit()
 
     def on_delete(self, event=None):
-        index = self.filelist1.curselection()
-        if index:
-            index = index[0]
-            selected_file = self.filelist1.get(index)
-            os.remove(os.path.join(self.directory, selected_file))
-            self.filelist1.delete(index)
-            if index == self.filelist1.size():
-                # 最後の項目を削除した場合、選択を前の項目に変更
-                self.filelist1.selection_set(index - 1)
-                self.filelist1.activate(index - 1)
+        if event == 1:
+            index = self.filelist1.curselection()
+            if index:
+                index = index[0]
+                selected_file = self.filelist1.get(index)
+                os.remove(os.path.join(self.directory, selected_file))
+                self.filelist1.delete(index)
+                if index == self.filelist1.size():
+                    # 最後の項目を削除した場合、選択を前の項目に変更
+                    self.filelist1.selection_set(index - 1)
+                    self.filelist1.activate(index - 1)
+                else:
+                    self.filelist1.selection_set(index)
+                    self.filelist1.activate(index)
+                event = tk.Event()
+                event.widget = self.filelist1
+                self.on_draw(event=event)
+                self.filelist1.focus_force()
             else:
-                self.filelist1.selection_set(index)
-                self.filelist1.activate(index)
-            event = tk.Event()
-            event.widget = self.filelist1
-            self.on_draw(event=event)
-            self.filelist1.focus_force()
-        else:
-            messagebox.showerror('Error', 'Failed to delete file')
+                messagebox.showerror('Error', 'Failed to delete file')
+        elif event == 2:
+            index = self.filelist2.curselection()
+            if index:
+                index = index[0]
+                selected_file = self.filelist2.get(index)
+                os.remove(os.path.join(self.dest_dir, selected_file))
+                self.filelist2.delete(index)
+                if index == self.filelist2.size():
+                    # 最後の項目を削除した場合、選択を前の項目に変更
+                    self.filelist2.selection_set(index - 1)
+                    self.filelist2.activate(index - 1)
+                else:
+                    self.filelist2.selection_set(index)
+                    self.filelist2.activate(index)
+                event = tk.Event()
+                event.widget = self.filelist2
+                self.on_draw(event=event)
+                self.filelist2.focus_force()
+            else:
+                messagebox.showerror('Error', 'Failed to delete file')
 
 
     def on_up(self, event=None):
