@@ -2038,7 +2038,7 @@ class App(tk.Tk):
                 self.wm_geometry(str(self.width) + 'x' + str(self.height))
                 self.update_status()
         else:
-            messagebox.showerror('Error','Display Image')
+            messagebox.showerror('Error','Clipboad is empty')
 
     def copy_to_clipboard(self , event=None):
         if self.image:
