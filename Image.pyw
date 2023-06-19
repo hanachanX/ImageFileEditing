@@ -865,8 +865,11 @@ class App(tk.Tk):
         # text = text.replace('?' , ' ')
         
         # Prompt
-        pattern1 = re.compile('^(.+)\n.*Negative.+$' , re.DOTALL)
-        self.target_text1 = re.sub(pattern1 , r'\1' , text)
+        if text.startswith('Steps'):
+            self.target_text1=''
+        else:    
+            pattern1 = re.compile('^(.+)\n.*Negative.+$' , re.DOTALL)
+            self.target_text1 = re.sub(pattern1 , r'\1' , text)
         # Negative Prompt
         pattern2 = re.compile('(?<=prompt:\s)(.+)(?=Steps:)' , re.S)
         self.target_text2 = '\n'.join(re.findall(pattern2, text)).strip()
