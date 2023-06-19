@@ -48,6 +48,7 @@ Colorful hair
 Gradient hair
 Brown hair
 White hair
+Reddish hair
 Floating hair
 Hair ornament
 Straw hat
@@ -84,6 +85,7 @@ Closedown to Viewer
 Looking at viewer
 Cowboy shot
 Happy laughing
+Devilish snaggletooth
 Bouquet of roses
 Normal chest
 Flat chest
@@ -93,6 +95,12 @@ Large breasts
 Absolute Territory
 Black knee-high socks
 Maid outfit
+Witch
+Wizard
+Sorcerer
+Imp
+Elemental magic
+Inazuma
 
 
 
