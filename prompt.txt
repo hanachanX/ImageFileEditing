@@ -79,6 +79,12 @@ Frilled dress
 Floral print dress
 Black pencil skirt
 Black jogger pants
+Suit jacket
+Sweater vest
+Blue bowtie
+Pantyhose
+Outdoors
+Street
 Casual attire
 Nature surroundings
 Distant horizon
@@ -103,6 +109,7 @@ Blurry background
 Closeup to Viewer
 Closedown to Viewer
 Looking at viewer
+From below
 Cowboy shot
 Happy laughing
 Devilish snaggletooth
