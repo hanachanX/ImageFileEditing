@@ -9,11 +9,15 @@ Super fine
 Dynamic angle
 Absurdres
 Line art
+Elegant
 2D
 Cinematic
 Beautiful detailed cinematic light
 Perfect anatomy
 Perfect hands
+Perfect body
+Gorgeous face
+Digital Photography
 Photo-realistic
 Add-Layer
 Illustration
@@ -28,6 +32,7 @@ Portrait
 1 girl , Solo
 Supermodel
 Female focus
+Dynamic pose
 Anime Character
 Chibi
 Five-heads-tall
@@ -42,23 +47,38 @@ Red eyes
 Green eyes
 Real skin texture
 Long wavy hair
+Floating hair
 Multicolored hair
 Pastel color hair
+Twintails
+Side ponytail
 Colorful hair
 Gradient hair
 Brown hair
 White hair
-Reddish hair
-Floating hair
+Silver Hair
+Red hair
+Blonde hair
 Hair ornament
 Straw hat
 Full body
 Upper body
+Narrow waist
 Mechanical legs
 Combat bodysuit
 Hoodie
 Raincoat
 School Uniform
+Military uniform
+Trench coat
+Orange cardigan
+Striped shirt
+Blue blouse
+Tank suit
+Frilled dress
+Floral print dress
+Black pencil skirt
+Black jogger pants
 Casual attire
 Nature surroundings
 Distant horizon
@@ -101,6 +121,4 @@ Sorcerer
 Imp
 Elemental magic
 Inazuma
-
-
-
+Billiard table
