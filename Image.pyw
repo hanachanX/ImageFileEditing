@@ -1085,8 +1085,9 @@ class App(tk.Tk):
 
     def on_half_panel(self , event=None):
         if self.image:
-            if not self.halftone or (not self.halftone.w_info.exist()):
+            if not self.halftone or (not self.halftone.winfo_exists()):
                 self.halftone = tk.Toplevel()
+                self.halftone.protocol('WM_DELETE_WINDOW' , self.on_destroy_half)
                 self.halftone.title('Degital Half~Toning')
                 self.halftone.withdraw()
                 self.halftone.update()
@@ -1869,7 +1870,7 @@ class App(tk.Tk):
             self.update_status()
 
     def on_save_file(self , event=None):
-        self.image_path = filedialog.asksaveasfilename(defaultextension='.jpg')
+        self.image_path = filedialog.asksaveasfilename(defaultextension='.png')
         if self.image_path:
             if self.image:
                 name = tk_to_pil(self.image)
