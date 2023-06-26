@@ -23,6 +23,7 @@ Trending on CGSociety
 Gorgeous face
 Digital Photography
 Photo-realistic
+Ray tracing
 Add-Layer
 Illustration
 F/2.8
@@ -58,6 +59,7 @@ Toddler body
 Loli
 Android
 Detailed eyes
+Multicolored eyes
 Tareme
 Tsurime
 Red eyes
@@ -76,17 +78,25 @@ White hair
 Silver Hair
 Red hair
 Blonde hair
+Ahoge
 Hair ornament
 Hair ribbon accessories
+Baseball cap
 Straw hat
 Nekomimi
 Fox ears
 Full body
 Upper body
+Slim body
 Narrow waist
+Fingernails
+Nail polish
 Mechanical legs
+Slim legs
+Mechanical arms
 Combat bodysuit
 Hoodie
+hood down
 Raincoat
 School Uniform
 Military uniform
@@ -97,6 +107,7 @@ Blue blouse
 Tank suit
 Frilled dress
 Floral print dress
+Sleeves past wrists
 Black pencil skirt
 Black jogger pants
 Suit jacket
@@ -124,6 +135,8 @@ Beautiful purple and blue hydrangea flowers
 Autumn leaves
 Cityscape view
 Pastral landscape
+Flying petal
+Flowery meadow
 Building pavilion
 Depth Of Field
 Shallow Depth of field
@@ -134,6 +147,7 @@ Looking at viewer
 From below
 From above
 Cowboy shot
+Bust shot
 Happy laughing
 Devilish snaggletooth
 Bouquet of roses
@@ -143,6 +157,7 @@ Medium breasts
 Big Breasts
 Large breasts
 Absolute Territory
+Zettai ryouiki
 Black knee-high socks
 Black thigh highs
 Maid outfit
