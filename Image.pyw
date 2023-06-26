@@ -156,6 +156,60 @@ def bayers(img,met):
 
     return ret
 
+def ulichney(im, met):
+    '''
+    https://github.com/SankarSrin/Digital-Halftoning/tree/master
+    参考にさせていただきました。
+    '''
+    im = np.array(ImageTk.getimage(im))
+    im = cv2.cvtColor(im , cv2.COLOR_RGB2GRAY)
+    im = im.astype(np.float32)/255
+    s1, s2 = im.shape
+
+    if met == 3:
+        od = np.array([[12, 5, 6, 13],
+                      [4, 0, 1, 7],
+                      [11, 3, 2, 8],
+                      [15, 10, 9, 14]]) / 15
+        bs = 4
+    elif met == 4:
+        od = np.array([[0.567, 0.635, 0.608, 0.514, 0.424, 0.365, 0.392, 0.486],
+                      [0.847, 0.878, 0.910, 0.698, 0.153, 0.122, 0.090, 0.302],
+                      [0.820, 0.969, 0.941, 0.667, 0.180, 0.031, 0.059, 0.333],
+                      [0.725, 0.788, 0.757, 0.545, 0.275, 0.212, 0.243, 0.455],
+                      [0.424, 0.365, 0.392, 0.486, 0.567, 0.635, 0.608, 0.514],
+                      [0.153, 0.122, 0.090, 0.302, 0.847, 0.878, 0.910, 0.698], 
+                      [0.180, 0.031, 0.059, 0.333, 0.820, 0.969, 0.941, 0.667], 
+                      [0.275, 0.212, 0.243, 0.455, 0.725, 0.788, 0.757, 0.545]])
+        bs = 8
+    elif met == 5:
+        od = np.array([[131, 187, 8, 78, 50, 18, 134, 89, 155, 102, 29, 95, 184, 73],
+                      [22, 86, 113, 171, 142, 105, 34, 166, 9, 60, 151, 128, 40, 110],
+                      [168, 137, 45, 28, 64, 188, 82, 54, 124, 189, 80, 13, 156, 56],
+                      [7, 61, 186, 121, 154, 6, 108, 177, 24, 100, 38, 176, 93, 123],
+                      [83, 148, 96, 17, 88, 133, 44, 145, 69, 161, 139, 72, 30, 181],
+                      [115, 27, 163, 47, 178, 65, 164, 14, 120, 48, 5, 127, 153, 52],
+                      [190, 58, 126, 81, 116, 21, 106, 77, 173, 92, 191, 63, 99, 12],
+                      [76, 144, 4, 185, 37, 149, 192, 39, 135, 23, 117, 31, 170, 132],
+                      [35, 172, 103, 66, 129, 79, 3, 97, 57, 159, 70, 141, 53, 94],
+                      [114, 20, 49, 158, 19, 146, 169, 122, 183, 11, 104, 180, 2, 165],
+                      [152, 87, 182, 118, 91, 42, 67, 25, 84, 147, 43, 85, 125, 68],
+                      [16, 136, 71, 10, 193, 112, 160, 138, 51, 111, 162, 26, 194, 46],
+                      [174, 107, 41, 143, 33, 74, 1, 101, 195, 15, 75, 140, 109, 90],
+                      [32, 62, 157, 98, 167, 119, 179, 59, 36, 130, 175, 55, 0, 150]]) / 196
+        bs = 14
+        s1, s2 = im.shape
+        r1 = s1 % bs
+        r2 = s2 % bs
+        s1 = s1 - r1
+        s2 = s2 - r2
+        im = cv2.resize(im, (s2, s1))
+
+    mask = np.tile(od, (s2 // bs, s1 // bs)).T
+    HOD = im > mask
+
+    return HOD
+
 def sort_files_by_timestamp(files , dir):
     """
     ファイル名のリストを、最終更新時刻の昇順にソートする関数
@@ -396,8 +450,7 @@ class App(tk.Tk):
         self.processmenu.add_command(label='Gamma corr.', command=self.on_gamma)
         self.processmenu.add_command(label='Gray conv.' , command=self.on_gray_scale)
         self.processmenu.add_command(label='Sepia conv.' , command=self.on_sepia)
-        self.processmenu.add_command(label='Half-Tone1' , command=lambda : self.on_half(1))
-        self.processmenu.add_command(label='Half-Tone2' , command=lambda : self.on_half(0))
+        self.processmenu.add_command(label='Half-Tone' , command=self.on_half_panel)
         self.processmenu.add_command(label='Dot-Art' , command=self.on_dot)
         self.processmenu.add_command(label='Painterly style' ,  command=self.on_paint)
         self.processmenu.add_command(label='Posterization' , command=self.on_poster_panel)
@@ -448,6 +501,11 @@ class App(tk.Tk):
         self.poster_var = tk.IntVar()
         self.poster_var.set(2)
         self.image_poster = None
+        
+        # Half-Tonig用パネル
+        self.halftone = None
+        self.half_var = tk.IntVar()
+        self.half_var.set(-1)
 
         #　設定メニュー
         # self.configmenu = tk.Menu(self.menubar , tearoff=0)
@@ -1024,14 +1082,53 @@ class App(tk.Tk):
         else:
             messagebox.showerror('Error' , 'Display Image')
             self.esrgan = None
-            
-    def on_half(self , pattern):
+
+    def on_half_panel(self , event=None):
         if self.image:
-            self.image_arr = bayers(self.image , pattern)
-            self.image = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
-            self.canvas.create_image(0,0,image=self.image, anchor=tk.NW, tag="image")
+            if not self.halftone or (not self.halftone.w_info.exist()):
+                self.halftone = tk.Toplevel()
+                self.halftone.title('Degital Half~Toning')
+                self.halftone.withdraw()
+                self.halftone.update()
+                self.halftone.geometry('+%d+%d' % (self.winfo_rootx() - 40, self.winfo_rooty() - 40))
+                self.halftone.deiconify()
+                self.half_label1 = ttk.Label(self.halftone , text="Bayer's Methods")
+                self.half_label2 = ttk.Label(self.halftone , text="Ulichney' Methods")
+                self.half_radio1 = ttk.Radiobutton(self.halftone , text='Pettern1' , variable=self.half_var , value=1 , command=self.on_half)
+                self.half_radio2 = ttk.Radiobutton(self.halftone , text='Pettren2' , variable=self.half_var , value=2 , command=self.on_half)
+                self.half_radio3 = ttk.Radiobutton(self.halftone , text='Pettren3' , variable=self.half_var , value=3 ,  command=self.on_half)
+                self.half_radio4 = ttk.Radiobutton(self.halftone , text='Pettren4' , variable=self.half_var , value=4 , command=self.on_half)
+                self.half_radio5 = ttk.Radiobutton(self.halftone , text='Pettren5' , variable=self.half_var , value=5 , command=self.on_half)
+                self.sep = ttk.Separator(self.halftone)
+                self.half_label1.grid(row=0 , column=0 , padx=10 , pady=10 )
+                self.half_radio1.grid(row=1, column=0 , padx=10 , pady=10)
+                self.half_radio2.grid(row=1 , column=1 , padx=10 , pady=10)
+                self.sep.grid(row=2, column=0 , columnspan=5 , sticky='ew' , padx=10)
+                self.half_label2.grid(row=3 , column=0 , padx=10 , pady=10)
+                self.half_radio3.grid(row=4 , column=0 , padx=10 , pady=10)
+                self.half_radio4.grid(row=4 , column=1 , padx=10 , pady=10)
+                self.half_radio5.grid(row=4 , column=2 , padx=10 , pady=10)
         else:
             messagebox.showerror('Error' , 'Display Image')
+                
+    def on_half(self):
+        if self.image:
+            met = self.half_var.get()
+            if met in (1 , 2):
+                self.image_arr = bayers(self.image , met)
+            else:
+                self.image_arr = ulichney(self.image , met)
+            self.image_half = ImageTk.PhotoImage(Image.fromarray(self.image_arr))
+            self.canvas.create_image(0,0,image=self.image_half, anchor=tk.NW, tag="image")
+        else:
+            messagebox.showerror('Error' , 'Display Image')
+            
+    def on_destroy_half(self):
+        self.image = self.image_half
+        self.image_half = None
+        self.halftone.destroy()
+        self.halftone = None
+        self.half_var.set(-1)
             
     def on_aa_panel(self):
         if self.image:
