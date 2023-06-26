@@ -21,6 +21,7 @@ import re
 import zipfile
 import subprocess
 import random
+import datetime
 import torch
 import concurrent.futures
 from torchvision.transforms.functional import to_tensor
@@ -482,8 +483,12 @@ class App(tk.Tk):
         # ステータスバー
         self.frame_status = tk.Frame(self, bd=1, relief=tk.SUNKEN)
         self.frame_status.pack(side=tk.BOTTOM , fill=tk.X)
-        self.status_bar = tk.Label(self.frame_status , text='' , justify=tk.RIGHT, anchor=tk.E)
-        self.status_bar.pack(fill=tk.X , padx=10)
+        self.status_bar = ttk.Label(self.frame_status , text='' , justify=tk.RIGHT, anchor=tk.E)
+        self.status_bar_filename = ttk.Label(self.frame_status , text='' , justify=tk.LEFT , anchor=tk.W)
+        self.status_bar_filename.grid(row=0, column=0 , padx=10 , sticky=tk.W)
+        self.status_bar.grid(row=0 , column=1 , padx=10 , sticky=tk.E)
+        self.frame_status.grid_columnconfigure(0, weight=1) # status_bar_filenameがframe_statusの空きスペースを使えるように
+        self.frame_status.grid_columnconfigure(1, weight=0) 
 
         # UPScale WINDOW
         self.carn = None
@@ -894,10 +899,15 @@ class App(tk.Tk):
         else:
             return
                     
-    def update_status(self):
+    def update_status(self , text=None):
         self.width = self.image.width()
         self.height = self.image.height()
         self.status_bar.config(text=f'({self.width}x{self.height})')
+        if text is not None:
+            self.status_bar_filename.config(text=text)
+        else:
+            self.status_bar_filename.config(text='')
+            
 
     def set_AI_info(self , image_path):
         with open(image_path , 'rb') as f:
@@ -1802,7 +1812,11 @@ class App(tk.Tk):
                 self.width , self.height = self.image.width() , self.image.height()
                 self.canvas.create_image(0,0,image=self.image,anchor=tk.NW, tag="image")
                 self.wm_geometry(f'{self.width}x{self.height}')
-                self.update_status()
+                time_data = os.path.getmtime(full_path)
+                timestamp = datetime.datetime.fromtimestamp(time_data)
+                timestamp = timestamp.strftime('%Y_%b_%d %H:%M:%S')
+                text = f'{full_path} : {timestamp}'
+                self.update_status(text)
                 logger.debug('%s , %s' ,full_path ,  os.path.splitext(full_path)[1].lower())
                 self.attributes("-topmost", True)
                 self.after_idle(self.attributes , '-topmost' , False)
