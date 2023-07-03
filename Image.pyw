@@ -1288,6 +1288,7 @@ class App(tk.Tk):
                 self.cont.update()
                 self.cont.geometry('+%d+%d' % (self.winfo_rootx() + 10, self.winfo_rooty() + 10))
                 self.cont.deiconify()
+                self.cont.protocol('WM_DELETE_WINDOW' , self.on_focus_out_cont)
                 
                 # ウィジェットの作成
                 self.cont_label = ttk.Label(self.cont , text='' , width=20)
@@ -1320,6 +1321,8 @@ class App(tk.Tk):
         if self.cont:
             self.cont.destroy()
             self.cont = None
+            self.image = self.image_cont
+            self.image_cont = None
                 
     def on_exec_cont(self , value=None):
         
