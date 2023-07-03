@@ -367,7 +367,7 @@ class App(tk.Tk):
     def __init__(self , **kwargs):
         super().__init__(**kwargs)
         # メインウインドウ設定
-        self.title('IIMAGE FILE TOOL')
+        self.title('IMAGE FILE TOOL')
         self.geometry('512x768+100+100')
         self.resizable(False , False)
         self.update()
@@ -445,16 +445,21 @@ class App(tk.Tk):
         self.processmenu.add_command(label='Mosaic' , command=self.on_mosaic)
         self.processmenu.add_command(label='Pencil' , command=self.on_pencil)
         self.processmenu.add_command(label='Resize' , command=self.on_resize)
-        self.processmenu.add_command(label='Color conv.' , command=self.on_change)
-        self.processmenu.add_command(label='HSV conv.' , command=self.on_hsv_panel)
-        self.processmenu.add_command(label='Contrast adj.' , command=self.on_contrast_panel)
-        self.processmenu.add_command(label='Gamma corr.', command=self.on_gamma)
-        self.processmenu.add_command(label='Gray conv.' , command=self.on_gray_scale)
-        self.processmenu.add_command(label='Sepia conv.' , command=self.on_sepia)
+        self.processmenu.add_command(label='RGB' , command=self.on_change)
+        self.processmenu.add_command(label='HSV' , command=self.on_hsv_panel)
+        self.processmenu.add_command(label='Contrast' , command=self.on_contrast_panel)
+        self.processmenu.add_command(label='Gamma', command=self.on_gamma)
+        self.processmenu.add_command(label='Gray' , command=self.on_gray_scale)
+        self.processmenu.add_command(label='Sepia' , command=self.on_sepia)
         self.processmenu.add_command(label='Half-Tone' , command=self.on_half_panel)
         self.processmenu.add_command(label='Dot-Art' , command=self.on_dot)
         self.processmenu.add_command(label='Painterly style' ,  command=self.on_paint)
         self.processmenu.add_command(label='Posterization' , command=self.on_poster_panel)
+        self.processmenu.add_command(label='Sharpness' ,command=self.on_sharp)
+        self.processmenu.add_command(label='Brightness' , command=self.on_bright_panel)
+        self.processmenu.add_command(label='Dilation' , command=self.on_dilate)
+        self.processmenu.add_command(label='Erosion' , command=self.on_erode)
+        self.processmenu.add_command(label='CLAHE' , command=self.on_clahe)
         self.processmenu.add_command(label='Mirror' , command=self.on_mirror)
         self.processmenu.add_command(label='Cropping' , command=self.on_trim)
         self.menubar.add_cascade(label='Conv' , menu=self.processmenu)
@@ -470,7 +475,7 @@ class App(tk.Tk):
         self.upscalemenu = tk.Menu(self.menubar , tearoff=False)
         self.upscalemenu.add_command(label='CARNv2' , command=self.on_carn_panel)
         self.upscalemenu.add_command(label='R-ESRGAN' , command=self.on_esrgan_panel)
-        self.menubar.add_cascade(label='ULTRA-Resolution' , menu=self.upscalemenu)
+        self.menubar.add_cascade(label='Super-Resolution' , menu=self.upscalemenu)
         
         # ASCIIアート
         self.menubar.add_command(label='Create AA', command=self.on_aa_panel)
@@ -511,6 +516,12 @@ class App(tk.Tk):
         self.halftone = None
         self.half_var = tk.IntVar()
         self.half_var.set(-1)
+
+        # Brightness
+        self.bright = None
+        self.bright_var = tk.DoubleVar()
+        self.bright_var.set(0.0)
+        self.image_bright = None
 
         #　設定メニュー
         # self.configmenu = tk.Menu(self.menubar , tearoff=0)
@@ -672,6 +683,92 @@ class App(tk.Tk):
         self.filelist2.delete(0 , tk.END)
         for file in sorted_file:
             self.filelist2.insert(tk.END , file)
+
+    def on_clahe(self , event=None):
+        if self.image:
+            img = np.array(ImageTk.getimage(self.image))
+            img_lab = cv2.cvtColor(img , cv2.COLOR_RGB2Lab)
+            l , a , b = cv2.split(img_lab)
+            clahe = cv2.createCLAHE(clipLimit=3.0 , tileGridSize=(8,8))
+            cl = clahe.apply(l)
+            img_clahe = cv2.merge((cl , a , b))
+            img_clahe_rgb = cv2.cvtColor(img_clahe, cv2.COLOR_Lab2RGB)
+            self.image = ImageTk.PhotoImage(Image.fromarray(img_clahe_rgb))
+            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW , tag='image')
+
+    def on_dilate(self , event=None):
+        if self.image:
+            img = np.array(ImageTk.getimage(self.image))
+            kernel = np.ones((3,3),np.uint8)
+            dilation = cv2.dilate(img, kernel, iterations = 1)
+            self.image = ImageTk.PhotoImage(Image.fromarray(dilation))
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW , tag='image')
+
+    def on_erode(self , event=None):
+        if self.image:
+            img = np.array(ImageTk.getimage(self.image))
+            kernel = np.ones((3,3),np.uint8)
+            erosion = cv2.erode(img , kernel , iterations = 1)
+            self.image = ImageTk.PhotoImage(Image.fromarray(erosion))
+            self.canvas.create_image(0,0,image=self.image , anchor=tk.NW , tag='image')
+
+
+    def on_bright_panel(self , event=None):
+        if not self.bright or not self.bright.winfo_exists():
+            self.bright = tk.Toplevel()
+            self.bright.withdraw()
+            self.bright.geometry(f'+{self.winfo_x()+20}+{self.winfo_y()+20}')
+            self.bright.protocol('WM_DELETE_WINDOW' , self.on_bright_destroy)
+            self.bright.update()
+            self.bright.deiconify()
+            self.bright_scale = ttk.Scale(self.bright,
+                                from_=-100,
+                                to=100,
+                                length=200,
+                                orient=tk.HORIZONTAL,
+                                variable=self.bright_var,
+                                command=self.on_update_bright)
+            self.bright_label = ttk.Label(self.bright , text='')
+            self.bright_scale.grid(row=0 , column=0 , padx=10 , pady=10)
+            self.bright_label.grid(row=0 , column=1 , padx=10 , pady=10)
+            self.on_update_bright()
+            self.bright.bind("<MouseWheel>" , self.on_wheel_bright)
+
+    def on_update_bright(self , event=None):
+        if self.image:
+            self.bright_label.config(text=f'Sth:{self.bright_var.get():.1f}')
+            img = np.array(ImageTk.getimage(self.image), dtype=np.float32)  
+            bright_img = np.subtract(img , np.array([-self.bright_var.get()])) 
+            bright_img = np.clip(bright_img, 0, 255)  
+            bright_img = bright_img.astype(np.uint8) 
+            self.image_bright = ImageTk.PhotoImage(Image.fromarray(bright_img))
+            self.canvas.create_image(0,0,image=self.image_bright , anchor=tk.NW , tag='image')
+        else:
+            messagebox.showerror('Error' , 'Display image')    
+        
+    def on_wheel_bright(self , event=None):
+        if event.delta > 0 and self.bright_scale.get() < self.bright_scale.cget('to'):
+            self.bright_scale.set(self.bright_scale.get() + 1)
+        elif event.delta < 0 and self.bright_scale.get() > self.bright_scale.cget('from'):
+            self.bright_scale.set(self.bright_scale.get() - 1)
+
+    def on_bright_destroy(self):
+        self.bright.destroy()
+        self.bright = None
+        self.bright_var.set(0)
+        self.image = self.image_bright
+        self.image_bright = None
+
+    def on_sharp(self , event=None):
+        if self.image:
+            img = np.array(ImageTk.getimage(self.image))
+            blurred = cv2.GaussianBlur( img , (0,0) , 3)
+            sharp_mask = cv2.addWeighted(img, 1.5, blurred, -0.5, 0)
+            self.image = ImageTk.PhotoImage(Image.fromarray(sharp_mask))
+            self.canvas.create_image(0,0,image=self.image,anchor=tk.NW , tag='image')
+        else:
+            messagebox.showerror('Error' , 'Display Image')
+
                 
     def on_poster_panel(self , event=None):
         if not self.poster or (not self.poster.winfo_exists()):
