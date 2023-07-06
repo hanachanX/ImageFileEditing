@@ -487,7 +487,7 @@ class App(tk.Tk):
         self.status_bar_filename = ttk.Label(self.frame_status , text='' , justify=tk.LEFT , anchor=tk.W)
         self.status_bar_filename.grid(row=0, column=0 , padx=10 , sticky=tk.W)
         self.status_bar.grid(row=0 , column=1 , padx=10 , sticky=tk.E)
-        self.frame_status.grid_columnconfigure(0, weight=1) # status_bar_filenameがframe_statusの空きスペースを使えるように
+        self.frame_status.grid_columnconfigure(0, weight=1) 
         self.frame_status.grid_columnconfigure(1, weight=0) 
 
         # UPScale WINDOW
