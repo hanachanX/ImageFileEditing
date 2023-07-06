@@ -10,6 +10,9 @@ This app is a tool for managing files created in large quantities by StableDiffu
 
 Known Issue: The deleted files in the Explorer are not reflected in the list box. Please just reload App.
 
+* Version 3.1
+I have added functions for brightness adjustment, sharp mask, dilation, erosion, and clahe.
+
 * Version 3.0
 I have added Ulichney's algorithm to the halftoning methods, in addition to Bayer's technique, making it possible to choose from five different patterns. The code I referenced for this can be found at https://github.com/SankarSrin/Digital-Halftoning/tree/master.
 
@@ -145,9 +148,11 @@ Courier Newフォントがインストールされていないとデフォルト
 * バージョン2.9 - ファイルリストのメニューに「By Name」「By Time」を追加しました。右ファイルリストを名前かタイムスタンプかどちらの昇順に並べるか選べます。左リストは名前順＝時間順でしょうからそちらは対応してません。
 　生成情報がちゃんと表示されないバグを修正しました。二バイト文字は表示できなくしました（スペースで置換される）
 
-* バージョン3.0 - ハーフトンのメニューを統合しBayer'sの2パターン、Ulichneyの3パターンの5パターンから選択できるようにしました。参考にさせていただいたのは以下の記事です。
+* バージョン3.0 - ハーフトーンのメニューを統合しBayer'sの2パターン、Ulichneyの3パターンの5パターンから選択できるようにしました。参考にさせていただいたのは以下の記事です。
 https://github.com/SankarSrin/Digital-Halftoning/tree/master
-要は新聞写真風にするアルゴリズムです。需要はないでしょうか遊んでください。
+要は新聞写真風にするアルゴリズムです。需要はないでしょうが遊んでください。
+
+* バージョン3.1 - ブライトネス調節、シャープマスク、dilation , erosion , CLAHE(ヒストグラム平坦化)の機能を追加しました。
 
 * 必要な追加ライブラリのインストール：python.exe -m pip install -r requirements.txt
 
