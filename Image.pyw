@@ -22,12 +22,13 @@ import zipfile
 import subprocess
 import random
 import datetime
+import shutil
 import torch
 import concurrent.futures
 from torchvision.transforms.functional import to_tensor
 from RealESRGAN import RealESRGAN
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.WARNING , encoding='utf-8')
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s' , level=logging.DEBUG , encoding='utf-8')
 logger = logging.getLogger(__name__)
 
 
@@ -1827,10 +1828,10 @@ class App(tk.Tk):
                     target_file = self.filelist1.get(selected_index)
                     full_path = os.path.join(self.directory , target_file)
                     file_list = os.listdir(self.senddir)
-                    logger.debug('%s' , file_list)
+                    logger.debug('%s' , target_file)
                     if target_file not in file_list:
                         dest = os.path.join(self.senddir , target_file)
-                        os.rename(full_path , dest)
+                        shutil.move(full_path , dest)
                         self.filelist2.insert(tk.END , target_file)
                         self.filelist1.delete(selected_index)
                         if selected_index == self.filelist1.size():
