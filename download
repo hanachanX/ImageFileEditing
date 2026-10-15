@@ -1,0 +1,11 @@
+*.png
+*.jpg
+!image/*.png
+!image/*.jpg
+settings.json
+dir_config.ini
+image_tool_error.txt
+__pycache__/
+*.pyc
+.pytest_cache/
+glyph.py

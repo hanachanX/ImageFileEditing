@@ -1,0 +1,4 @@
+# 超解像（CARN / Real-ESRGAN）を使うときだけ追加で必要なもの
+# GPU(CUDA)で使う場合は、https://pytorch.org/ の案内に従って torch を入れてください。
+torch>=2.0
+huggingface_hub>=0.20     # Real-ESRGAN の重みを自動ダウンロードするときだけ使います
